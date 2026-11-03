@@ -1,0 +1,16 @@
+# dépendances et sorties locales
+node_modules/
+_site/
+
+# environnement et secrets — jamais dans le dépôt
+.env
+.env.*
+
+# bruit système et éditeurs
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+.claude/

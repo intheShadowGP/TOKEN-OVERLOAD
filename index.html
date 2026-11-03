@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="fr" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; manifest-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; worker-src 'none'; child-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#090B10">
+  <meta name="description" content="TOKEN OVERLOAD — jeu incrémental sur la consommation de tokens des IA. 100 % local, sans compte ni traceur.">
+  <title>TOKEN OVERLOAD</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand__logo" viewBox="0 0 32 32" aria-hidden="true">
+          <defs>
+            <linearGradient id="brand-g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#3987FF"/>
+              <stop offset="1" stop-color="#9165FF"/>
+            </linearGradient>
+          </defs>
+          <path d="M16 2.5l11.7 6.75v13.5L16 29.5 4.3 22.75V9.25z" fill="none" stroke="url(#brand-g)" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M10.5 12h11M16 12v9" fill="none" stroke="#F3F5FA" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+        <span class="brand__name">TOKEN<span class="brand__accent">OVERLOAD</span></span>
+      </div>
+
+      <button class="grade-chip" id="grade-chip" type="button" aria-label="Voir les grades">
+        <span class="grade-chip__badge" id="grade-chip-badge"></span>
+        <span class="grade-chip__text">
+          <span class="grade-chip__label">Grade</span>
+          <strong class="grade-chip__name" id="grade-name">Noobie</strong>
+        </span>
+      </button>
+
+      <div class="top-stats">
+        <button class="top-stat" id="top-rebirths-btn" type="button" aria-label="Voir la renaissance">
+          <span class="top-stat__label">Renaissances</span>
+          <strong class="top-stat__value" id="top-rebirths">0</strong>
+        </button>
+        <div class="top-stat" title="Multiplicateur permanent = 4 ^ renaissances">
+          <span class="top-stat__label">Multiplicateur permanent</span>
+          <strong class="top-stat__value top-stat__value--accent" id="top-mult">×1</strong>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="icon-btn" id="btn-sound" type="button" aria-label="Couper le son" aria-pressed="false"><span data-icon="volume"></span></button>
+        <button class="icon-btn" id="btn-stats" type="button" aria-label="Statistiques"><span data-icon="chart"></span></button>
+        <button class="icon-btn" id="btn-settings" type="button" aria-label="Paramètres"><span data-icon="sliders"></span></button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="core card" aria-label="Production de tokens">
+        <div class="counter">
+          <div class="counter__label">Tokens disponibles</div>
+          <div class="counter__value" id="tokens-value" aria-live="off">0</div>
+          <div class="counter__sub"><span id="tokens-full">0 token</span></div>
+        </div>
+
+        <div class="rates">
+          <div class="rate">
+            <span class="rate__label">Production</span>
+            <strong class="rate__value" id="rate-tps">0/s</strong>
+          </div>
+          <div class="rate">
+            <span class="rate__label">Par clic</span>
+            <strong class="rate__value" id="rate-click">1</strong>
+          </div>
+          <div class="rate">
+            <span class="rate__label">Multiplicateur global</span>
+            <strong class="rate__value rate__value--accent" id="rate-global">×1</strong>
+          </div>
+        </div>
+
+        <div class="reactor" id="reactor">
+          <canvas class="reactor__fx" id="fx-canvas" aria-hidden="true"></canvas>
+          <div class="reactor__halo" aria-hidden="true"></div>
+          <div class="reactor__orbit" aria-hidden="true"></div>
+          <button class="token-btn" id="token-button" type="button" aria-label="Générer des tokens (clic)">
+            <svg class="token-btn__svg" viewBox="0 0 200 200" aria-hidden="true">
+              <defs>
+                <linearGradient id="tk-edge" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#5FA0FF"/>
+                  <stop offset="0.55" stop-color="#7B74FF"/>
+                  <stop offset="1" stop-color="#9165FF"/>
+                </linearGradient>
+                <radialGradient id="tk-core" cx="0.38" cy="0.3" r="0.85">
+                  <stop offset="0" stop-color="#2A3550"/>
+                  <stop offset="0.6" stop-color="#151B29"/>
+                  <stop offset="1" stop-color="#0D111A"/>
+                </radialGradient>
+                <linearGradient id="tk-glyph" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#F3F5FA"/>
+                  <stop offset="1" stop-color="#B9C4E6"/>
+                </linearGradient>
+              </defs>
+              <path class="token-btn__shell" d="M100 8l80 46v92l-80 46-80-46V54z" fill="url(#tk-core)" stroke="url(#tk-edge)" stroke-width="5" stroke-linejoin="round"/>
+              <path d="M100 26l64 37v74l-64 37-64-37V63z" fill="none" stroke="#3987FF" stroke-opacity="0.22" stroke-width="1.5"/>
+              <g class="token-btn__circuit" fill="none" stroke="#3987FF" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round">
+                <path d="M52 78h18l8 8"/>
+                <path d="M148 78h-18l-8 8"/>
+                <path d="M60 128h20"/>
+                <path d="M140 128h-20"/>
+                <path d="M100 150v14"/>
+              </g>
+              <g fill="#9165FF">
+                <circle cx="52" cy="78" r="4"/>
+                <circle cx="148" cy="78" r="4"/>
+                <circle cx="60" cy="128" r="3.5"/>
+                <circle cx="140" cy="128" r="3.5"/>
+                <circle cx="100" cy="166" r="3.5"/>
+              </g>
+              <path d="M70 70h60M100 70v76" fill="none" stroke="url(#tk-glyph)" stroke-width="15" stroke-linecap="round"/>
+              <circle cx="100" cy="70" r="7" fill="#3987FF"/>
+            </svg>
+          </button>
+          <div class="float-layer" id="float-layer" aria-hidden="true"></div>
+        </div>
+
+        <p class="core__hint" id="core-hint">Cliquez sur le token pour générer vos premiers tokens.</p>
+
+        <div class="effects" id="effects" aria-live="polite"></div>
+
+        <div class="mini-cards">
+          <article class="mini-card" id="grade-progress">
+            <header class="mini-card__head">
+              <span class="mini-card__kicker">Prochain grade</span>
+              <strong class="mini-card__title" id="next-grade-name">Prompt Beginner</strong>
+            </header>
+            <div class="req-list" id="next-grade-reqs"></div>
+          </article>
+
+          <article class="mini-card mini-card--rebirth" id="rebirth-progress">
+            <header class="mini-card__head">
+              <span class="mini-card__kicker">Renaissance</span>
+              <strong class="mini-card__title" id="rebirth-mult-preview">×1 → ×4</strong>
+            </header>
+            <div class="bar" aria-hidden="true"><div class="bar__fill bar__fill--rebirth" id="rebirth-bar"></div></div>
+            <div class="mini-card__row">
+              <span id="rebirth-progress-text">0 / 1 M générés</span>
+              <button class="btn btn--rebirth btn--sm" id="btn-rebirth-quick" type="button" disabled>Renaître</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel card" aria-label="Améliorations et progression">
+        <div class="tabs" role="tablist" aria-label="Sections">
+          <button class="tab" role="tab" id="tab-infra" aria-controls="panel-infra" aria-selected="true" data-tab="infra" type="button"><span data-icon="server"></span><span>Infrastructures</span></button>
+          <button class="tab" role="tab" id="tab-click" aria-controls="panel-click" aria-selected="false" data-tab="click" type="button" tabindex="-1"><span data-icon="cursor"></span><span>Clic</span><span class="tab__dot" id="dot-click" hidden></span></button>
+          <button class="tab" role="tab" id="tab-grades" aria-controls="panel-grades" aria-selected="false" data-tab="grades" type="button" tabindex="-1"><span data-icon="crown"></span><span>Grades</span></button>
+          <button class="tab" role="tab" id="tab-achievements" aria-controls="panel-achievements" aria-selected="false" data-tab="achievements" type="button" tabindex="-1"><span data-icon="trophy"></span><span>Succès</span><span class="tab__count" id="ach-count-tab">0</span></button>
+          <button class="tab" role="tab" id="tab-rebirth" aria-controls="panel-rebirth" aria-selected="false" data-tab="rebirth" type="button" tabindex="-1"><span data-icon="rebirth"></span><span>Renaissance</span><span class="tab__dot tab__dot--rebirth" id="dot-rebirth" hidden></span></button>
+          <button class="tab" role="tab" id="tab-log" aria-controls="panel-log" aria-selected="false" data-tab="log" type="button" tabindex="-1"><span data-icon="list"></span><span>Journal</span></button>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-infra" aria-labelledby="tab-infra">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Infrastructures</h2>
+              <p class="panel-sub">Chaque infrastructure produit des tokens chaque seconde. Production ×2 à 25, 50, 100, 150, 200… exemplaires.</p>
+            </div>
+            <div class="segmented" role="radiogroup" aria-label="Quantité d'achat" id="buy-mode">
+              <button type="button" role="radio" aria-checked="true" data-mode="1">×1</button>
+              <button type="button" role="radio" aria-checked="false" data-mode="10">×10</button>
+              <button type="button" role="radio" aria-checked="false" data-mode="25">×25</button>
+              <button type="button" role="radio" aria-checked="false" data-mode="max">Max</button>
+            </div>
+          </div>
+          <div class="shop-list" id="shop-buildings"></div>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-click" aria-labelledby="tab-click" hidden>
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Puissance de clic</h2>
+              <p class="panel-sub">Achats uniques. La plus forte valeur de base s'applique ; les bonus « % de production » se cumulent.</p>
+            </div>
+          </div>
+          <div class="shop-list" id="shop-clicks"></div>
+          <div class="panel-head panel-head--spaced">
+            <div>
+              <h2 class="panel-title">Auto-cliqueurs</h2>
+              <p class="panel-sub">De vrais clics automatiques, comptés dans vos statistiques et vos grades.</p>
+            </div>
+          </div>
+          <div class="shop-list" id="shop-auto"></div>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-grades" aria-labelledby="tab-grades" hidden>
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Grades</h2>
+              <p class="panel-sub">Conditions cumulatives et historiques : elles ne diminuent jamais, même après une renaissance. Chaque grade ajoute +10 % de production permanente.</p>
+            </div>
+          </div>
+          <div class="grade-list" id="grade-list"></div>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-achievements" aria-labelledby="tab-achievements" hidden>
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Succès</h2>
+              <p class="panel-sub" id="ach-summary">0 débloqué</p>
+            </div>
+            <div class="segmented" role="radiogroup" aria-label="Filtrer les succès" id="ach-filter">
+              <button type="button" role="radio" aria-checked="true" data-filter="all">Tous</button>
+              <button type="button" role="radio" aria-checked="false" data-filter="done">Obtenus</button>
+              <button type="button" role="radio" aria-checked="false" data-filter="todo">À obtenir</button>
+            </div>
+          </div>
+          <div class="ach-grid" id="ach-grid"></div>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-rebirth" aria-labelledby="tab-rebirth" hidden>
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Renaissance</h2>
+              <p class="panel-sub">Recommencez avec un multiplicateur permanent ×4 sur toute la production, manuelle et automatique.</p>
+            </div>
+          </div>
+          <div class="rebirth-hero">
+            <div class="rebirth-hero__mults">
+              <div class="mult-box"><span>Actuel</span><strong id="rb-current">×1</strong></div>
+              <span class="mult-arrow" data-icon="arrowUp"></span>
+              <div class="mult-box mult-box--next"><span>Après renaissance</span><strong id="rb-next">×4</strong></div>
+            </div>
+            <div class="bar bar--lg" aria-hidden="true"><div class="bar__fill bar__fill--rebirth" id="rb-bar"></div></div>
+            <p class="rebirth-hero__text" id="rb-text">Générez 1 M de tokens pendant cette partie.</p>
+            <button class="btn btn--rebirth btn--lg" id="btn-rebirth" type="button" disabled>Préparer la renaissance</button>
+          </div>
+          <div class="keep-grid">
+            <div class="keep-card keep-card--reset">
+              <h3>Remis à zéro</h3>
+              <ul>
+                <li>Tokens disponibles</li>
+                <li>Infrastructures achetées</li>
+                <li>Production automatique de la partie</li>
+                <li>Améliorations et auto-cliqueurs</li>
+                <li>Bonus temporaires en cours</li>
+              </ul>
+            </div>
+            <div class="keep-card keep-card--keep">
+              <h3>Conservé</h3>
+              <ul>
+                <li>Clics et tokens générés (historique)</li>
+                <li>Clusters achetés (historique)</li>
+                <li>Grades et succès débloqués</li>
+                <li>Nombre de renaissances</li>
+                <li>Protections défensives, journal, statistiques</li>
+              </ul>
+            </div>
+          </div>
+          <h3 class="sub-title">Historique des renaissances</h3>
+          <div class="table-wrap">
+            <table class="data-table" id="rb-history">
+              <thead><tr><th scope="col">N°</th><th scope="col">Tokens générés</th><th scope="col">Durée</th><th scope="col">Multiplicateur obtenu</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty" id="rb-history-empty">Aucune renaissance pour l'instant.</p>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-log" aria-labelledby="tab-log" hidden>
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Journal</h2>
+              <p class="panel-sub">Événements importants, succès, grades et incidents (50 derniers).</p>
+            </div>
+          </div>
+          <div class="shield-status" id="shield-status"></div>
+          <ol class="log-list" id="log-list"></ol>
+          <p class="empty" id="log-empty">Rien à signaler… pour l'instant.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>TOKEN OVERLOAD · progression stockée uniquement sur cet appareil · aucun compte, aucun traceur</span>
+      <button class="link-btn" id="btn-privacy" type="button">Confidentialité</button>
+    </footer>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Paramètres -->
+  <dialog class="dialog" id="dlg-settings" aria-labelledby="settings-title">
+    <div class="dialog__head">
+      <h2 id="settings-title">Paramètres</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Fermer"><span data-icon="close"></span></button>
+    </div>
+    <div class="dialog__body">
+      <nav class="dialog-tabs" role="tablist" aria-label="Catégories de paramètres">
+        <button class="dialog-tab" type="button" role="tab" aria-selected="true" data-section="general">Jeu</button>
+        <button class="dialog-tab" type="button" role="tab" aria-selected="false" data-section="save">Sauvegarde</button>
+        <button class="dialog-tab" type="button" role="tab" aria-selected="false" data-section="privacy">Confidentialité</button>
+      </nav>
+
+      <section class="settings-section" data-section-panel="general">
+        <h3 class="sub-title">Audio</h3>
+        <label class="switch"><input type="checkbox" id="set-sound"><span class="switch__track"></span><span>Effets sonores</span></label>
+        <label class="range"><span>Volume</span><input type="range" id="set-volume" min="0" max="100" step="5"></label>
+
+        <h3 class="sub-title">Graphismes</h3>
+        <label class="switch"><input type="checkbox" id="set-particles"><span class="switch__track"></span><span>Particules</span></label>
+        <label class="switch"><input type="checkbox" id="set-floating"><span class="switch__track"></span><span>Gains flottants</span></label>
+        <label class="select"><span>Animations</span>
+          <select id="set-motion">
+            <option value="auto">Selon le système</option>
+            <option value="off">Toutes les animations</option>
+            <option value="on">Réduites</option>
+          </select>
+        </label>
+        <label class="switch"><input type="checkbox" id="set-countdown"><span class="switch__track"></span><span>Compte à rebours de renaissance</span></label>
+
+        <h3 class="sub-title">Jeu</h3>
+        <label class="select"><span>Affichage des nombres</span>
+          <select id="set-format">
+            <option value="short">Court (1,5 M · 2 Md · 3 T)</option>
+            <option value="sci">Scientifique (1,5e6)</option>
+          </select>
+        </label>
+        <label class="switch"><input type="checkbox" id="set-events"><span class="switch__track"></span><span>Événements aléatoires</span></label>
+        <label class="switch"><input type="checkbox" id="set-tutorial"><span class="switch__track"></span><span>Afficher le tutoriel au démarrage</span></label>
+        <button class="btn btn--ghost" type="button" id="btn-tutorial-now">Revoir le tutoriel maintenant</button>
+      </section>
+
+      <section class="settings-section" data-section-panel="save" hidden>
+        <p class="note"><span data-icon="info"></span><span>La sauvegarde est stockée dans ce navigateur, sur cet appareil uniquement. Elle n'est <strong>pas synchronisée</strong> entre appareils : exportez-la pour la transférer ou la conserver.</span></p>
+        <p class="save-status" id="save-status">Sauvegarde automatique toutes les 15 secondes.</p>
+        <div class="btn-row">
+          <button class="btn" type="button" id="btn-save-now"><span data-icon="vault"></span>Sauvegarder maintenant</button>
+          <button class="btn" type="button" id="btn-export"><span data-icon="download"></span>Exporter (.json)</button>
+          <button class="btn btn--ghost" type="button" id="btn-copy-export"><span data-icon="copy"></span>Copier</button>
+        </div>
+        <h3 class="sub-title">Importer une sauvegarde</h3>
+        <p class="panel-sub">Le fichier est lu localement, vérifié (format, empreinte d'intégrité, types, bornes) puis chargé. Rien n'est envoyé sur Internet.</p>
+        <div class="btn-row">
+          <button class="btn" type="button" id="btn-import-file"><span data-icon="upload"></span>Choisir un fichier…</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </div>
+        <label class="textarea"><span>…ou collez le contenu JSON</span>
+          <textarea id="import-text" rows="4" spellcheck="false" autocomplete="off" maxlength="262144"></textarea>
+        </label>
+        <div class="btn-row">
+          <button class="btn" type="button" id="btn-import-text">Importer le texte collé</button>
+        </div>
+        <p class="form-msg" id="import-msg" role="status"></p>
+
+        <h3 class="sub-title sub-title--danger">Zone dangereuse</h3>
+        <p class="panel-sub">Supprime définitivement la partie et toutes les données locales du jeu sur cet appareil.</p>
+        <button class="btn btn--danger" type="button" id="btn-wipe"><span data-icon="trash"></span>Réinitialiser complètement</button>
+      </section>
+
+      <section class="settings-section prose" data-section-panel="privacy" hidden>
+        <h3 class="sub-title">Confidentialité</h3>
+        <ul class="check-list">
+          <li><strong>Aucune inscription</strong> : pas de compte, pas de connexion, pas de mot de passe.</li>
+          <li><strong>Aucune donnée personnelle demandée</strong> : ni nom, ni e-mail, ni localisation.</li>
+          <li><strong>Aucune télémétrie</strong> : pas de statistiques d'audience, pas de publicité, pas de traceur, pas de remontée d'erreurs.</li>
+          <li><strong>Progression stockée localement</strong> dans votre navigateur (<code>localStorage</code>), uniquement les données de jeu : tokens, achats, statistiques, grades, succès, paramètres, temps de jeu.</li>
+          <li><strong>Aucune synchronisation cloud</strong> : la partie reste sur cet appareil et ce navigateur.</li>
+          <li><strong>Vous gardez la main</strong> : exportez, importez ou supprimez la sauvegarde à tout moment (onglet Sauvegarde).</li>
+        </ul>
+        <p>Les fichiers du jeu sont hébergés publiquement (GitHub Pages) ; l'hébergeur peut journaliser les requêtes techniques de téléchargement de ces fichiers, comme tout serveur web. Une fois chargé, le jeu n'effectue aucune requête réseau : la politique de sécurité du contenu (CSP) interdit toute connexion sortante.</p>
+        <p>Aucun système n'est infaillible : ces mesures réduisent les risques, elles ne constituent pas une garantie absolue. Une extension de navigateur ou un logiciel installé sur l'appareil peut, par exemple, accéder au stockage local.</p>
+      </section>
+    </div>
+  </dialog>
+
+  <!-- Statistiques -->
+  <dialog class="dialog dialog--wide" id="dlg-stats" aria-labelledby="stats-title">
+    <div class="dialog__head">
+      <h2 id="stats-title">Statistiques</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Fermer"><span data-icon="close"></span></button>
+    </div>
+    <div class="dialog__body">
+      <div class="chart-card">
+        <div class="chart-card__head">
+          <h3 class="sub-title">Production par seconde (échelle logarithmique)</h3>
+          <span class="chart-card__legend" id="chart-legend"></span>
+        </div>
+        <canvas class="chart" id="stats-chart" width="800" height="220" role="img" aria-label="Évolution de la production par seconde"></canvas>
+      </div>
+      <div class="stats-groups" id="stats-groups"></div>
+    </div>
+  </dialog>
+
+  <!-- Confirmation générique -->
+  <dialog class="dialog dialog--narrow" id="dlg-confirm" aria-labelledby="confirm-title">
+    <div class="dialog__head">
+      <h2 id="confirm-title">Confirmer</h2>
+    </div>
+    <div class="dialog__body">
+      <p id="confirm-text"></p>
+      <label class="switch switch--confirm" id="confirm-check-wrap" hidden><input type="checkbox" id="confirm-check"><span class="switch__track"></span><span id="confirm-check-label">Je comprends</span></label>
+      <div class="btn-row btn-row--end">
+        <button class="btn btn--ghost" type="button" id="confirm-cancel">Annuler</button>
+        <button class="btn" type="button" id="confirm-ok">Confirmer</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Renaissance -->
+  <dialog class="dialog dialog--rebirth" id="dlg-rebirth" aria-labelledby="rebirth-title">
+    <div class="dialog__head">
+      <h2 id="rebirth-title">Renaissance n°<span id="dlg-rb-n">1</span></h2>
+      <button class="icon-btn" type="button" data-close aria-label="Fermer"><span data-icon="close"></span></button>
+    </div>
+    <div class="dialog__body">
+      <div class="rebirth-hero__mults rebirth-hero__mults--dialog">
+        <div class="mult-box"><span>Multiplicateur actuel</span><strong id="dlg-rb-current">×1</strong></div>
+        <span class="mult-arrow" data-icon="arrowUp"></span>
+        <div class="mult-box mult-box--next"><span>Nouveau multiplicateur</span><strong id="dlg-rb-next">×4</strong></div>
+      </div>
+      <p class="note note--warning"><span data-icon="warning"></span><span>Vos tokens (<strong id="dlg-rb-tokens">0</strong>), vos infrastructures, vos améliorations et vos auto-cliqueurs seront <strong>remis à zéro</strong>. Vos statistiques historiques, grades, succès et renaissances sont conservés.</span></p>
+      <p class="panel-sub" id="dlg-rb-nextthreshold"></p>
+      <label class="switch switch--confirm"><input type="checkbox" id="dlg-rb-check"><span class="switch__track"></span><span>Je comprends que la partie en cours sera remise à zéro.</span></label>
+      <div class="btn-row btn-row--end">
+        <button class="btn btn--ghost" type="button" data-close>Pas maintenant</button>
+        <button class="btn btn--rebirth" type="button" id="dlg-rb-confirm" disabled>Lancer la renaissance</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Hors ligne -->
+  <dialog class="dialog dialog--narrow" id="dlg-offline" aria-labelledby="offline-title">
+    <div class="dialog__head">
+      <h2 id="offline-title">Pendant votre absence…</h2>
+    </div>
+    <div class="dialog__body">
+      <p class="offline-amount" id="offline-amount">+0</p>
+      <p id="offline-text"></p>
+      <div class="btn-row btn-row--end">
+        <button class="btn" type="button" data-close>Récupérer</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Animation de renaissance -->
+  <div class="rebirth-fx" id="rebirth-fx" hidden aria-live="assertive">
+    <canvas class="rebirth-fx__canvas" id="rebirth-canvas" aria-hidden="true"></canvas>
+    <div class="rebirth-fx__content">
+      <div class="rebirth-fx__count" id="rebirth-count"></div>
+      <div class="rebirth-fx__title" id="rebirth-fx-title">RENAISSANCE</div>
+      <div class="rebirth-fx__mult" id="rebirth-fx-mult"></div>
+    </div>
+  </div>
+
+  <!-- Tutoriel -->
+  <div class="tutorial" id="tutorial" hidden>
+    <div class="tutorial__spot" id="tutorial-spot"></div>
+    <div class="tutorial__card" id="tutorial-card" role="dialog" aria-labelledby="tutorial-title" aria-describedby="tutorial-text">
+      <div class="tutorial__step" id="tutorial-step">1 / 5</div>
+      <h2 class="tutorial__title" id="tutorial-title"></h2>
+      <p class="tutorial__text" id="tutorial-text"></p>
+      <label class="switch switch--sm"><input type="checkbox" id="tutorial-never"><span class="switch__track"></span><span>Ne plus afficher</span></label>
+      <div class="btn-row btn-row--end">
+        <button class="btn btn--ghost btn--sm" type="button" id="tutorial-skip">Passer</button>
+        <button class="btn btn--sm" type="button" id="tutorial-next">Suivant</button>
+      </div>
+    </div>
+  </div>
+
+  <noscript>
+    <div class="noscript">TOKEN OVERLOAD nécessite JavaScript. Le jeu fonctionne entièrement dans votre navigateur, sans aucune connexion à un serveur tiers.</div>
+  </noscript>
+</body>
+</html>

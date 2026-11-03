@@ -1,0 +1,61 @@
+# Teste le jeu puis le publie sur GitHub Pages à chaque push sur main.
+# Réglage requis une fois : Settings → Pages → Source : « GitHub Actions ».
+name: Tests et déploiement GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Moindre privilège : lecture du code, écriture uniquement sur Pages.
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # aucune dépendance à installer : node:test uniquement
+      - run: npm test
+
+  build:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      # seuls les fichiers du jeu sont publiés (pas les tests ni package.json)
+      - name: Assembler le site
+        run: |
+          mkdir _site
+          cp -r index.html favicon.svg README.md SECURITY.md PRIVACY.md assets css js _site/
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

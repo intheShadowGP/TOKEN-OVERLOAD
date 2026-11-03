@@ -1,0 +1,286 @@
+/* TOKEN OVERLOAD — adaptations tablettes et smartphones. */
+
+@media (max-width: 1180px) {
+  .top-stat__label {
+    font-size: 9.5px;
+  }
+
+  .layout {
+    grid-template-columns: minmax(330px, 0.85fr) minmax(0, 1.15fr);
+  }
+}
+
+/* Tablette : une colonne, zone de clic compacte en haut */
+@media (max-width: 960px) {
+  :root {
+    --gutter: 16px;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .core {
+    position: relative;
+    top: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'counter reactor'
+      'rates reactor'
+      'hint hint'
+      'effects effects'
+      'cards cards';
+    align-items: center;
+    gap: 14px 18px;
+  }
+
+  .counter { grid-area: counter; }
+  .rates { grid-area: rates; }
+  .reactor { grid-area: reactor; height: 240px; }
+  .core__hint { grid-area: hint; }
+  .effects { grid-area: effects; }
+  .mini-cards { grid-area: cards; }
+
+  .panel {
+    min-height: 0;
+  }
+
+  .tabs {
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 10;
+    background: rgb(16 20 29 / 0.94);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+@media (max-width: 820px) {
+  .top-stats {
+    display: none;
+  }
+}
+
+/* Smartphone */
+@media (max-width: 640px) {
+  :root {
+    --gutter: 16px;
+    --topbar-h: 58px;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  .topbar {
+    gap: 10px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .brand__name {
+    display: none;
+  }
+
+  .grade-chip {
+    margin-right: auto;
+    padding-right: 10px;
+  }
+
+  .grade-chip__badge {
+    width: 28px;
+    height: 28px;
+  }
+
+  .grade-chip__name {
+    font-size: 13px;
+    max-width: 34vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .layout {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .core {
+    display: flex;
+    align-items: stretch;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .counter__value {
+    font-size: clamp(32px, 10vw, 44px);
+  }
+
+  .rates {
+    gap: 6px;
+  }
+
+  .rate {
+    padding: 8px 4px;
+  }
+
+  .rate__label {
+    font-size: 9.5px;
+    letter-spacing: 0.03em;
+  }
+
+  .rate__value {
+    font-size: 14px;
+  }
+
+  .reactor {
+    height: 210px;
+  }
+
+  .mini-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tab {
+    padding: 8px 11px;
+    font-size: 13px;
+  }
+
+  .tab-panel {
+    padding: 14px 12px;
+  }
+
+  .panel-head {
+    align-items: stretch;
+  }
+
+  .segmented {
+    width: 100%;
+  }
+
+  .segmented button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .shop-item {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 10px 12px;
+    padding: 12px;
+  }
+
+  .shop-item__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .shop-item__icon .icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .shop-item__buy {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .buy-btn {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+
+  .grade-card {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .grade-card__badge {
+    width: 40px;
+    height: 40px;
+  }
+
+  .grade-card .status-pill {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .keep-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rebirth-hero {
+    padding: 16px;
+  }
+
+  .rebirth-hero__mults {
+    gap: 8px;
+  }
+
+  .mult-box {
+    min-width: 0;
+    flex: 1;
+    padding: 10px;
+  }
+
+  .mult-box strong {
+    font-size: 20px;
+  }
+
+  .log-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .log-item__time {
+    grid-column: 2;
+  }
+
+  .toasts {
+    left: 16px;
+    right: 16px;
+    bottom: 12px;
+    width: auto;
+  }
+
+  .dialog {
+    width: calc(100vw - 24px);
+    max-height: 90vh;
+  }
+
+  .dialog__body {
+    padding: 16px;
+  }
+
+  .btn-row .btn {
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .top-actions {
+    gap: 4px;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+
+  .grade-chip__label {
+    display: none;
+  }
+}
+
+@media (hover: none) {
+  .token-btn:hover {
+    transform: none;
+    filter: drop-shadow(0 12px 28px rgb(57 135 255 / 0.35));
+  }
+}
