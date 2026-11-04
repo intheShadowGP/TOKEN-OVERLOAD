@@ -3,16 +3,18 @@ import assert from 'node:assert/strict';
 import { makeEngine, close } from './helpers.mjs';
 import { CONFIG } from '../js/core/config.js';
 import { canRebirth, rebirthThreshold } from '../js/core/prestige.js';
+import { REBIRTH_THRESHOLDS } from '../js/data/prestige.js';
 import { earnedGradeIndex, nextGradeProgress } from '../js/core/progression.js';
 import { GRADES } from '../js/data/levels.js';
 import { ACHIEVEMENTS } from '../js/data/achievements.js';
 
 // ───── renaissance ─────
 
-test('seuil : 1 M, 100 M, 1 Md, 100 Md, 1 T… (alternance ×100 / ×10)', () => {
-  assert.deepEqual([0, 1, 2, 3, 4, 5, 6].map(rebirthThreshold), [1e6, 1e8, 1e9, 1e11, 1e12, 1e14, 1e15]);
-  for (let n = 1; n < 40; n++) assert.ok(rebirthThreshold(n) > rebirthThreshold(n - 1));
-  assert.ok(Number.isFinite(rebirthThreshold(CONFIG.prestige.maxRenaissances)));
+test('seuils : table calibrée de 100 valeurs, strictement croissante, 1re vers 45 min', () => {
+  assert.equal(REBIRTH_THRESHOLDS.length, CONFIG.prestige.maxRenaissances);
+  for (let n = 1; n < REBIRTH_THRESHOLDS.length; n++) assert.ok(rebirthThreshold(n) > rebirthThreshold(n - 1), `seuil ${n + 1}`);
+  for (const t of REBIRTH_THRESHOLDS) assert.ok(Number.isFinite(t) && t < CONFIG.maxValue);
+  assert.ok(rebirthThreshold(0) > 1e6, 'la 1re renaissance demande plus de 1 M (partie de 45 min)');
 });
 
 test('renaissance impossible sous le seuil, jamais automatique', () => {
@@ -27,9 +29,9 @@ test('renaissance impossible sous le seuil, jamais automatique', () => {
 
 test('renaissance : remet la partie à zéro et conserve l’historique', () => {
   const e = makeEngine({
-    tokens: 5e6,
-    runGenerated: 2e6,
-    totalGenerated: 3e6,
+    tokens: 5e7,
+    runGenerated: 2e8,
+    totalGenerated: 3e8,
     totalClicks: 1234,
     manualClicks: 1234,
     buildings: { 'cdi-pc': 40, 'family-pc': 12 },
@@ -53,7 +55,7 @@ test('renaissance : remet la partie à zéro et conserve l’historique', () => 
   assert.equal(e.rates.rawTps, 0);
   assert.equal(e.rates.clickBase, 1);
   // conservé
-  assert.equal(s.totalGenerated, 3e6);
+  assert.equal(s.totalGenerated, 3e8);
   assert.equal(s.totalClicks, 1234);
   assert.equal(s.totalBuildingsBought, 80);
   assert.equal(s.renaissances, 1);
@@ -65,39 +67,31 @@ test('renaissance : remet la partie à zéro et conserve l’historique', () => 
   assert.equal(s.rebirthHistory.length, 1);
 });
 
-test('après renaissance, la même infrastructure produit exactement ×4', () => {
-  const e = makeEngine({ runGenerated: 1e6, totalGenerated: 1e6 });
+test('après renaissance, la même infrastructure produit exactement ×2', () => {
+  const e = makeEngine({ runGenerated: rebirthThreshold(0), totalGenerated: rebirthThreshold(0) });
   e.state.buildings = { 'cdi-pc': 10 };
   const before = e.rates.tps / (1 + e.rates.achievements) / (1 + e.rates.grades);
   e.rebirth();
   e.state.buildings = { 'cdi-pc': 10 };
   e.invalidate();
   const after = e.rates.tps / (1 + e.rates.achievements) / (1 + e.rates.grades);
-  assert.ok(close(after, before * 4), `${after} vs ${before * 4}`);
+  assert.ok(close(after, before * 2), `${after} vs ${before * 2}`);
 });
 
-test('à partir de la 15e renaissance, chaque seuil vaut +3 500 % (×36) du précédent', () => {
-  // seuil de la n° k = rebirthThreshold(k - 1)
-  assert.equal(rebirthThreshold(13), 1e26, '14e : alternance ×100 / ×10 jusque-là');
-  assert.ok(close(rebirthThreshold(14) / rebirthThreshold(13), 36), '15e = 14e × 36');
-  for (let k = 15; k < 40; k++) assert.ok(close(rebirthThreshold(k) / rebirthThreshold(k - 1), 36));
-  assert.ok(close(rebirthThreshold(13) / rebirthThreshold(12), 100));
-});
-
-test('un seuil devenu inatteignable (plafond numérique) bloque la renaissance', () => {
-  const e = makeEngine({ renaissances: 300 });
+test('100 renaissances au maximum : la suite passe par la Super Renaissance', () => {
+  const e = makeEngine({ renaissances: 100 });
   e.state.runGenerated = CONFIG.maxValue;
   e.state.totalGenerated = CONFIG.maxValue;
   assert.equal(canRebirth(e.state), false);
 });
 
-test('renaissances successives : multiplicateur 4^n', () => {
+test('renaissances successives : multiplicateur 2^n', () => {
   const e = makeEngine();
   for (let n = 1; n <= 4; n++) {
     e.state.runGenerated = rebirthThreshold(e.state.renaissances);
     e.state.totalGenerated += e.state.runGenerated;
     assert.ok(e.rebirth());
-    assert.equal(e.rates.prestige, 4 ** n);
+    assert.equal(e.rates.prestige, 2 ** n);
   }
 });
 
@@ -118,7 +112,7 @@ test('toutes les conditions doivent être remplies', () => {
 });
 
 test('le grade repart de zéro à chaque renaissance, conditions comptées depuis la renaissance', () => {
-  const e = makeEngine({ tokens: 1e6, totalGenerated: 1e6, runGenerated: 1e6 });
+  const e = makeEngine({ tokens: 1e8, totalGenerated: 1e8, runGenerated: 1e8 });
   for (let i = 0; i < 5; i++) e.buyBuilding('cdi-pc', 1);
   for (let i = 0; i < 500; i++) e.click(i * 100);
   e.evaluateProgress();
@@ -174,7 +168,7 @@ test('succès débloqués une seule fois, avec bonus permanent', () => {
 });
 
 test('succès de production et de renaissance', () => {
-  const e = makeEngine({ buildings: { 'gpu-cluster': 2 }, runGenerated: 1e6, totalGenerated: 1e6 });
+  const e = makeEngine({ buildings: { 'gpu-cluster': 2 }, runGenerated: 1e8, totalGenerated: 1e8 });
   e.evaluateProgress();
   assert.ok(Object.hasOwn(e.state.achievements, 'tps-1m'));
   assert.ok(Object.hasOwn(e.state.achievements, 'own-gpu-cluster'));

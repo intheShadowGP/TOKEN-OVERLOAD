@@ -47,6 +47,7 @@ export function statisticsRows(s, rates, fmt = {}) {
     { group: 'Progression', label: 'Grade actuel', value: currentGrade(s).name },
     { group: 'Progression', label: 'Meilleur grade atteint', value: bestGrade(s).name },
     { group: 'Progression', label: 'Renaissances', value: n(s.renaissances) },
+    { group: 'Progression', label: 'Super Renaissances', value: n(s.superRenaissances) },
     { group: 'Progression', label: 'Multiplicateur de renaissance', value: formatMultiplier(rates.prestige, fmt) },
     { group: 'Progression', label: 'Multiplicateur global', value: formatMultiplier(rates.global, fmt) },
     { group: 'Progression', label: 'Succès', value: `${achievementCount(s)} / ${ACHIEVEMENTS.length}` },

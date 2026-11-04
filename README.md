@@ -14,7 +14,9 @@ Jeu incrémental (*idle / clicker*) humoristique sur la consommation de tokens d
 | Clic | Gros bouton token animé, particules, gains flottants, 1 token par clic au départ ; 15 améliorations de clic (valeur de base jusqu'à 500 M, ou % de la production) ; 4 auto-cliqueurs (2, 5, 10 et 100 clics/s par niveau) qui génèrent de vrais clics. |
 | Production | 25 infrastructures en 5 paliers (Informatique basique → Technologies absurdes). Coût exponentiel `base × 1,15^n`, achat ×1 / ×10 / ×25 / Max, production ×2 à 25, 50, 100, 150, 200… exemplaires, temps d'amortissement affiché. |
 | Grades | 12 grades (Noobie → Omniscience). Le grade **repart de Noobie à chaque renaissance** : clusters achetés et clics comptent depuis la dernière renaissance, le nombre de renaissances est cumulé. Barres de progression, +10 % de production par grade détenu, meilleur grade atteint conservé. |
-| Renaissance | Seuil de tokens générés dans la partie (1 M, 100 M, 1 Md, 100 Md, 1 T… : ×100 puis ×10 en alternance ; à partir de la 15e renaissance, chaque seuil vaut 36 fois le précédent, soit +3 500 %), avertissement, confirmation explicite, compte à rebours, distorsion et particules. Multiplicateur permanent sur le clic et la production : ×4 par renaissance jusqu’à la 9e, puis ×2 à partir de la 10e. Jamais automatique. |
+| Renaissance | Seuil de tokens générés dans la partie, calibré par simulation : environ 45 min pour la 1re, puis des parties de plus en plus longues (≈ 36 h cumulées pour 20 renaissances, ≈ 72 h pour 30, plusieurs heures par partie ensuite). Multiplicateur permanent ×2 par renaissance sur le clic et la production, 100 renaissances au maximum. Avertissement, confirmation explicite, compte à rebours, distorsion et particules. Jamais automatique. |
+| Boosters | 5 achats uniques hors de prix, valables jusqu’à la renaissance suivante : Mine d’Ether-Token (production ×3), Bouclier neuronal (incidents neutralisés), Amplificateur de prompt (clics ×10), Accélérateur d’aléas (événements bonus deux fois plus fréquents et longs), Compresseur de contexte (infrastructures −50 %). Hors de portée vers la 5e renaissance, atteignables vers la 8e. |
+| Super Renaissance | Après 100 renaissances, avec +5 000 % de tokens par rapport au seuil de la 100e et tous les succès sauf un : remet les renaissances à zéro, multiplicateur permanent ×1 000 000 et succès « Je suis artificielle ». Environ un mois de jeu. |
 | Succès | 49 succès, chacun avec un bonus permanent (+1 à +10 %). |
 | Événements | 20 événements aléatoires locaux : bonus, incidents (temporaires et plafonnés), rares, défensifs (patch, firewall, audit, sauvegarde immuable). |
 | Statistiques | Partie en cours, historique, progression, graphique de production (échelle logarithmique), historique des renaissances, journal. |
@@ -105,7 +107,7 @@ token-overload/
 
 ```
 brut    = Σ production_de_base × quantité × paliers
-global  = renaissance (×4 chacune, ×2 dès la 10e) × (1 + bonus de succès) × (1 + 0,1 × grade)
+global  = 2^renaissances × 1 000 000^super_renaissances × (1 + bonus de succès) × (1 + 0,1 × grade)
 TPS     = brut × global × événements(production)
 clic    = (base de clic + part × brut) × global × événements(clic)
 ```
@@ -118,9 +120,19 @@ Le jeu utilise des flottants double précision (jusqu'à ~1,8e308), largement su
 
 ### Équilibrage
 
-Les simulations (`npm run simulate` : un joueur glouton qui clique 4 fois par seconde) donnent environ 15 min pour chacune des deux premières renaissances, puis des parties de quelques secondes entre la 6e et la 16e. Ensuite, chaque seuil vaut 36 fois le précédent alors que le multiplicateur ne double plus que : environ 2 min pour la 17e, 14 min pour la 18e, 2 h 30 pour la 19e, 22 h pour la 20e, plus de 2 jours pour la 21e. Le grade Omniscience, qui exige 30 renaissances, n’est donc pas atteignable en pratique avec ces réglages.
+Les seuils de renaissance sont **calibrés par simulation** (`node tests/calibrate.mjs --write`) : un joueur de référence (`tests/bot.mjs` : achats optimaux, 4 clics/s, événements coupés) joue la durée cible de chaque partie, et les tokens qu’il a générés deviennent le seuil. La table obtenue (`js/data/prestige.js`) reproduit donc exactement la courbe visée :
 
-Tout se règle dans `js/core/config.js`, section `prestige` : `thresholdSteps` (alternance des seuils, `[100, 10]`), `lateThresholdFrom` / `lateThresholdGrowth` (15e renaissance, ×36), `multiplierBase` / `lateMultiplierFrom` / `lateMultiplierBase` (×4, puis ×2 dès la 10e). Les grades se règlent dans `js/data/levels.js`.
+| Étape | Temps de jeu cumulé (joueur de référence) |
+| --- | --- |
+| 1re renaissance | 45 min |
+| 20 renaissances (Transcendance) | ≈ 36 h |
+| 30 renaissances (Omniscience) | ≈ 72 h |
+| 100 renaissances | ≈ 22 jours |
+| Super Renaissance | ≈ 30 jours |
+
+Les technologies absurdes s’achètent pour la première fois entre la 10e et la 15e partie ; les boosters à partir de la 9e. `npm run simulate -- 100 --super` rejoue toute la progression avec les vraies règles. Un joueur réel, qui n’achète pas toujours au mieux mais profite des événements, sera un peu plus lent.
+
+Après une modification de prix ou de production, relancer `node tests/calibrate.mjs --write` pour régénérer les seuils. Le multiplicateur (`prestige.multiplierBase`), le maximum de renaissances et la Super Renaissance (`superRebirth`) se règlent dans `js/core/config.js`, les grades dans `js/data/levels.js`.
 
 ## Tests
 
@@ -130,7 +142,7 @@ npm test
 
 Node.js 22 ou plus suffit : aucune dépendance à installer.
 
-64 tests (`node:test`, sans dépendance) couvrent : achats et coûts, production et delta time, clics et limitation, auto-clics, hors ligne, multiplicateurs (appliqués une seule fois), renaissances (seuils, ×36 dès la 15e, multiplicateur ×4 puis ×2, remis à zéro / conservé), grades (remise à zéro à la renaissance, meilleur grade conservé, migration des anciennes sauvegardes), succès, événements (tirage, durées, boucliers, plafonds), sauvegarde locale, export/import (empreinte, types, bornes, versions, pollution de prototype, injection de multiplicateurs), réinitialisation, formatage, et un test d'équilibrage.
+78 tests (`node:test`, sans dépendance) couvrent : achats et coûts, production et delta time, clics et limitation, auto-clics, hors ligne, multiplicateurs (appliqués une seule fois), renaissances (table de seuils, multiplicateur ×2, maximum de 100, remis à zéro / conservé), boosters, Super Renaissance, grades (remise à zéro à la renaissance, meilleur grade conservé, migration des anciennes sauvegardes), succès, événements (tirage, durées, boucliers, plafonds), sauvegarde locale, export/import (empreinte, types, bornes, versions, pollution de prototype, injection de multiplicateurs), réinitialisation, formatage, et l’équilibrage complet (45 min, 36 h, 72 h, un mois, rejoué en une dizaine de secondes).
 
 ## Crédits et licences
 

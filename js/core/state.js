@@ -2,7 +2,7 @@
 import { CONFIG } from './config.js';
 import { defaultSettings } from './settings.js';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 /** @param {number} [now] horodatage (ms) de création */
 export function createInitialState(now = Date.now()) {
@@ -20,6 +20,7 @@ export function createInitialState(now = Date.now()) {
     buildings: /** @type {Record<string, number>} */ ({}),
     upgrades: /** @type {Record<string, true>} */ ({}),
     autoclickers: /** @type {Record<string, number>} */ ({}),
+    boosters: /** @type {Record<string, true>} */ ({}),
     autoClickCarry: 0,
 
     // historique (jamais remis à zéro)
@@ -29,6 +30,7 @@ export function createInitialState(now = Date.now()) {
     autoClicks: 0,
     totalBuildingsBought: 0,
     renaissances: 0,
+    superRenaissances: 0,
     /** Grade de la partie en cours : repart de 0 à chaque renaissance. */
     gradeIndex: 0,
     /** Meilleur grade jamais atteint (historique). */
@@ -53,6 +55,7 @@ export function createInitialState(now = Date.now()) {
     // historique de progression
     history: /** @type {{ t: number, tps: number, total: number }[]} */ ([]),
     rebirthHistory: /** @type {{ n: number, generated: number, duration: number, at: number }[]} */ ([]),
+    superHistory: /** @type {{ n: number, generated: number, at: number }[]} */ ([]),
     log: /** @type {{ t: number, kind: string, text: string }[]} */ ([]),
 
     settings: defaultSettings(),
@@ -76,6 +79,7 @@ export function resetRun(s) {
   s.buildings = {};
   s.upgrades = {};
   s.autoclickers = {};
+  s.boosters = {};
   s.autoClickCarry = 0;
   s.effects = [];
   s.bestGradeIndex = Math.max(s.bestGradeIndex, s.gradeIndex);

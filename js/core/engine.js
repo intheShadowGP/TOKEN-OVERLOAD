@@ -9,13 +9,13 @@
  */
 import { CONFIG } from './config.js';
 import { clampValue, formatMultiplier } from './numbers.js';
-import { autoclickerCost, buildingCost, computeRates, maxAffordable, prestigeMultiplier } from './economy.js';
+import { autoclickerCost, boosterEffects, buildingCost, computeRates, maxAffordable, prestigeMultiplier } from './economy.js';
 import { applyEvent, expireEffects, nextDelay, nextExpiry, pickEvent } from './events.js';
 import { updateGrade } from './progression.js';
-import { canRebirth, performRebirth } from './prestige.js';
+import { canRebirth, performRebirth, performSuperRebirth, superStatus } from './prestige.js';
 import { checkAchievements } from './achievements.js';
 import { sampleHistory } from './statistics.js';
-import { AUTOCLICKER_MAP, BUILDING_MAP, CLICK_UPGRADE_MAP } from '../data/upgrades.js';
+import { AUTOCLICKER_MAP, BOOSTER_MAP, BUILDING_MAP, CLICK_UPGRADE_MAP } from '../data/upgrades.js';
 import { EVENT_MAP } from '../data/events.js';
 
 /** @typedef {1 | 10 | 25 | 'max'} BuyMode */
@@ -107,11 +107,13 @@ export class GameEngine {
     const def = BUILDING_MAP.get(id);
     if (!def) return null;
     const owned = this.state.buildings[id] ?? 0;
-    let qty = mode === 'max' ? maxAffordable(def, owned, this.state.tokens) : mode;
+    // le Compresseur de contexte réduit tous les prix d'infrastructure
+    const factor = this.rates.costFactor;
+    let qty = mode === 'max' ? maxAffordable(def, owned, this.state.tokens / factor) : mode;
     const room = CONFIG.maxOwned - owned;
     const display = mode === 'max' ? Math.max(1, Math.min(qty, room)) : Math.min(qty, room);
     qty = Math.min(qty, room);
-    const cost = buildingCost(def, owned, display);
+    const cost = Math.ceil(buildingCost(def, owned, display) * factor);
     return { def, owned, qty: display, cost, affordable: qty > 0 && display > 0 && cost <= this.state.tokens };
   }
 
@@ -168,6 +170,25 @@ export class GameEngine {
     s.autoclickers[id] = st.level + 1;
     this.invalidate();
     this.emit('purchase', { kind: 'autoclicker', id, cost: st.cost });
+    this.evaluateProgress();
+    return true;
+  }
+
+  boosterStatus(id) {
+    const def = BOOSTER_MAP.get(id);
+    if (!def) return null;
+    const owned = Boolean(this.state.boosters[id]);
+    return { def, owned, affordable: !owned && this.state.tokens >= def.cost };
+  }
+
+  buyBooster(id) {
+    const st = this.boosterStatus(id);
+    if (!st || !st.affordable) return false;
+    const s = this.state;
+    s.tokens = clampValue(s.tokens - st.def.cost);
+    s.boosters[id] = true;
+    this.invalidate();
+    this.emit('purchase', { kind: 'booster', id, cost: st.def.cost });
     this.evaluateProgress();
     return true;
   }
@@ -242,17 +263,17 @@ export class GameEngine {
       return;
     }
     this.triggerEvent(pickEvent(s, this.rng));
-    s.nextEventAt = s.clock + nextDelay(this.rng);
+    s.nextEventAt = s.clock + nextDelay(this.rng) / boosterEffects(s).events;
   }
 
   /** Déclenche un événement précis (aussi utilisé par les tests). */
   triggerEvent(def) {
     if (typeof def === 'string') def = EVENT_MAP.get(def);
     if (!def) return null;
-    const result = applyEvent(this.state, def, this.rates, (n) => this.addTokens(n));
+    const result = applyEvent(this.state, def, this.rates, (n) => this.addTokens(n), boosterEffects(this.state));
     this.invalidate();
     if (result.blocked) {
-      const by = { shield: 'le patch de sécurité', firewall: 'le firewall', immunity: 'la sauvegarde immuable' }[result.blocked];
+      const by = { booster: 'le Bouclier neuronal', shield: 'le patch de sécurité', firewall: 'le firewall', immunity: 'la sauvegarde immuable' }[result.blocked];
       this.log('defense', `${def.name} neutralisé par ${by}.`);
       this.emit('event:blocked', result);
     } else {
@@ -297,8 +318,25 @@ export class GameEngine {
     const record = performRebirth(this.state);
     if (!record) return null;
     this.invalidate();
-    this.log('rebirth', `Renaissance n°${record.n} — multiplicateur permanent ${formatMultiplier(prestigeMultiplier(record.n))}`);
+    this.log('rebirth', `Renaissance n°${record.n} — multiplicateur permanent ${formatMultiplier(prestigeMultiplier(record.n, this.state.superRenaissances))}`);
     this.emit('rebirth', record);
+    this.evaluateProgress();
+    this.emit('save-request', null);
+    return record;
+  }
+
+  // — Super Renaissance —
+
+  superStatus() {
+    return superStatus(this.state);
+  }
+
+  superRebirth() {
+    const record = performSuperRebirth(this.state);
+    if (!record) return null;
+    this.invalidate();
+    this.log('rebirth', `SUPER RENAISSANCE n°${record.n} — multiplicateur permanent ${formatMultiplier(this.rates.prestige)}`);
+    this.emit('super-rebirth', record);
     this.evaluateProgress();
     this.emit('save-request', null);
     return record;

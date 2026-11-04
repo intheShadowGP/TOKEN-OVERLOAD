@@ -45,11 +45,11 @@ export const BUILDINGS = Object.freeze([
   { id: 'next-gen', tier: 'advanced', icon: 'chip', cost: 2.4e16, tps: 3.8e11, name: 'Superordinateur nouvelle génération', text: "Gravé en 0,3 nanomètre. Le marketing parle déjà de -1 nanomètre." },
   { id: 'quantum-lab', tier: 'advanced', icon: 'atom', cost: 1.7e17, tps: 1.9e12, name: 'Centre de recherche quantique', text: "Les chercheurs y sont à la fois en pause café et au travail, tant qu'on ne vérifie pas." },
 
-  { id: 'quantum-pc', tier: 'absurd', icon: 'quantum', cost: 1.2e18, tps: 9.5e12, name: 'Ordinateur quantique', text: "Calcule toutes les réponses possibles en même temps. Choisit quand même la mauvaise, par principe." },
-  { id: 'agi', tier: 'absurd', icon: 'brain', cost: 8.4e18, tps: 4.8e13, name: 'Intelligence artificielle générale', text: "Elle a tout compris. Elle vous demande juste de reformuler votre question." },
-  { id: 'planet-net', tier: 'absurd', icon: 'globe', cost: 5.9e19, tps: 2.4e14, name: 'Réseau neuronal planétaire', text: "Chaque grille-pain de la Terre participe à l'inférence. Les toasts sont légèrement plus intelligents." },
-  { id: 'dyson', tier: 'absurd', icon: 'dyson', cost: 4.1e20, tps: 1.2e15, name: 'Dyson Compute Sphere', text: "Une étoile entière enveloppée de GPU. Le Soleil est passé en mode économie d'énergie." },
-  { id: 'singularity', tier: 'absurd', icon: 'singularity', cost: 2.9e21, tps: 6e15, name: 'Singularité informatique', text: "Le point de non-retour. Le temps lui-même est désormais facturé au token." },
+  { id: 'quantum-pc', tier: 'absurd', icon: 'quantum', cost: 5e23, tps: 1.7e14, name: 'Ordinateur quantique', text: "Calcule toutes les réponses possibles en même temps. Choisit quand même la mauvaise, par principe." },
+  { id: 'agi', tier: 'absurd', icon: 'brain', cost: 6e25, tps: 1.7e16, name: 'Intelligence artificielle générale', text: "Elle a tout compris. Elle vous demande juste de reformuler votre question." },
+  { id: 'planet-net', tier: 'absurd', icon: 'globe', cost: 7e27, tps: 1.9e18, name: 'Réseau neuronal planétaire', text: "Chaque grille-pain de la Terre participe à l'inférence. Les toasts sont légèrement plus intelligents." },
+  { id: 'dyson', tier: 'absurd', icon: 'dyson', cost: 8.5e29, tps: 2e20, name: 'Dyson Compute Sphere', text: "Une étoile entière enveloppée de GPU. Le Soleil est passé en mode économie d'énergie." },
+  { id: 'singularity', tier: 'absurd', icon: 'singularity', cost: 5e32, tps: 2e22, name: 'Singularité informatique', text: "Le point de non-retour. Le temps lui-même est désormais facturé au token." },
 ]);
 
 /**
@@ -87,6 +87,23 @@ export const AUTOCLICKERS = Object.freeze([
   { id: 'click-swarm', icon: 'neural', cost: 1e16, growth: 1.6, rate: 100, maxLevel: 10, name: 'Essaim de clics distribué', text: "Un million d’agents qui cliquent en parallèle, synchronisés par un consensus que personne ne comprend. +100 clics par seconde par niveau." },
 ]);
 
+/**
+ * Boosters : achats uniques très chers, valables pour la partie en cours
+ * (remis à zéro à la renaissance). Prix calibrés pour être hors de portée vers
+ * la 5e renaissance et atteignables vers la 8e (tests/calibrate.mjs).
+ * effect : production (×), click (× clics manuels et auto), costFactor (× prix
+ * des infrastructures), protection (incidents bloqués), events (bonus ×2 plus
+ * fréquents et plus longs).
+ */
+export const BOOSTERS = Object.freeze([
+  { id: 'ether-mine', icon: 'gem', cost: 1.2e23, effect: { production: 3 }, name: 'Mine d’Ether-Token', text: "Un gisement de tokens fossiles, extraits à la pioche quantique. Production ×3." },
+  { id: 'neural-firewall', icon: 'shieldCheck', cost: 1.5e23, effect: { protection: true }, name: 'Bouclier neuronal', text: "Un pare-feu qui lit les incidents avant qu’ils n’arrivent. Tous les événements négatifs sont neutralisés." },
+  { id: 'prompt-amplifier', icon: 'bolt', cost: 1.8e23, effect: { click: 10 }, name: 'Amplificateur de prompt', text: "Chaque clic est relu, reformulé et amplifié par 40 modèles. Clics et auto-clics ×10." },
+  { id: 'event-accelerator', icon: 'sparkles', cost: 2.2e23, effect: { events: 2 }, name: 'Accélérateur d’aléas', text: "Vous corrompez le générateur de hasard à votre avantage. Événements deux fois plus fréquents, bonus deux fois plus longs." },
+  { id: 'context-compressor', icon: 'chip', cost: 2.6e23, effect: { costFactor: 0.5 }, name: 'Compresseur de contexte', text: "Même résultat, moitié moins de tokens. Toutes les infrastructures coûtent 50 % de moins." },
+]);
+
 export const BUILDING_MAP = new Map(BUILDINGS.map((b) => [b.id, b]));
+export const BOOSTER_MAP = new Map(BOOSTERS.map((b) => [b.id, b]));
 export const CLICK_UPGRADE_MAP = new Map(CLICK_UPGRADES.map((u) => [u.id, u]));
 export const AUTOCLICKER_MAP = new Map(AUTOCLICKERS.map((a) => [a.id, a]));

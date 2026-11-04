@@ -6,7 +6,7 @@
 import { el, icon, setBar, setDisabled, setText, toggleClass } from './dom.js';
 import { buildingRawTps, milestoneMultiplier, nextMilestone } from '../core/economy.js';
 import { formatDuration, formatNumber, formatPercent } from '../core/numbers.js';
-import { AUTOCLICKERS, BUILDINGS, CLICK_UPGRADES, CLICK_UPGRADE_MAP, TIERS } from '../data/upgrades.js';
+import { AUTOCLICKERS, BOOSTERS, BUILDINGS, CLICK_UPGRADES, CLICK_UPGRADE_MAP, TIERS } from '../data/upgrades.js';
 
 export function createShop({ engine, fmt, onBuy, onDenied }) {
   const buildingRoot = document.getElementById('shop-buildings');
@@ -240,6 +240,52 @@ export function createShop({ engine, fmt, onBuy, onDenied }) {
     });
   }
 
+  // ───── boosters ─────
+
+  const boosterRoot = document.getElementById('shop-boosters');
+  const boosterCards = BOOSTERS.map((def) => {
+    const refs = {
+      def,
+      cost: el('span', { class: 'buy-btn__cost' }),
+      progress: el('span'),
+      owned: null,
+    };
+    refs.btn = el('button', { class: 'buy-btn', attrs: { type: 'button' } }, [el('span', { class: 'buy-btn__qty', text: 'Activer' }), refs.cost]);
+    refs.btn.addEventListener('click', () => {
+      if (engine.buyBooster(def.id)) onBuy(refs.btn);
+      else onDenied();
+    });
+    refs.badge = el('span', { class: 'owned-badge' }, [icon('check'), 'Actif']);
+    refs.buyProgress = el('div', { class: 'buy-progress', attrs: { 'aria-hidden': 'true' } }, [refs.progress]);
+    refs.buyBox = el('div', { class: 'shop-item__buy' }, [refs.btn, refs.buyProgress]);
+    refs.root = el('article', { class: 'shop-item' }, [
+      el('div', { class: 'shop-item__icon' }, [icon(def.icon)]),
+      el('div', { class: 'shop-item__body' }, [
+        el('div', { class: 'shop-item__title' }, [el('span', { class: 'shop-item__name', text: def.name })]),
+        el('p', { class: 'shop-item__text', text: def.text }),
+      ]),
+      refs.buyBox,
+    ]);
+    boosterRoot.append(refs.root);
+    return refs;
+  });
+
+  function updateBoosters() {
+    const s = engine.state;
+    for (const c of boosterCards) {
+      const st = engine.boosterStatus(c.def.id);
+      if (c.owned !== st.owned) {
+        c.owned = st.owned;
+        c.buyBox.replaceChildren(...(st.owned ? [c.badge] : [c.btn, c.buyProgress]));
+      }
+      toggleClass(c.root, 'is-affordable', st.affordable);
+      if (st.owned) continue;
+      setText(c.cost, formatNumber(c.def.cost, fmt()));
+      setDisabled(c.btn, !st.affordable);
+      setBar(c.progress, s.tokens / c.def.cost);
+    }
+  }
+
   // ───── mode d'achat ─────
 
   const modeGroup = document.getElementById('buy-mode');
@@ -258,11 +304,15 @@ export function createShop({ engine, fmt, onBuy, onDenied }) {
       updateBuildings();
       updateClicks();
       updateAuto();
+      updateBoosters();
     },
     refreshStructure() {
       orderClickCards();
     },
     /** Indique si une amélioration de clic est achetable (pastille d'onglet). */
+    hasAffordableBooster() {
+      return boosterCards.some((c) => engine.boosterStatus(c.def.id).affordable);
+    },
     hasAffordableClick() {
       const s = engine.state;
       return clickCards.some((c) => c.status === 'available' && s.tokens >= c.def.cost) || autoCards.some((c) => engine.autoclickerStatus(c.def.id).affordable);

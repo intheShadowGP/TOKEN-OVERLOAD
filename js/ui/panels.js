@@ -2,7 +2,8 @@
 import { el, icon, setBar, setDisabled, setText, toggleClass } from './dom.js';
 import { formatDuration, formatMultiplier, formatNumber, formatPercent } from '../core/numbers.js';
 import { gradeStats, REQ_LABELS } from '../core/progression.js';
-import { rebirthPreview, rebirthProgress } from '../core/prestige.js';
+import { rebirthPreview, rebirthProgress, superStatus } from '../core/prestige.js';
+import { CONFIG } from '../core/config.js';
 import { prestigeMultiplier } from '../core/economy.js';
 import { GRADES } from '../data/levels.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -119,6 +120,17 @@ export function createRebirthPanel(engine, fmt) {
   const tbody = document.querySelector('#rb-history tbody');
   const empty = document.getElementById('rb-history-empty');
   const table = document.getElementById('rb-history');
+  const superCard = document.getElementById('super-card');
+  const superBtn = document.getElementById('btn-super');
+  const superMissing = document.getElementById('super-missing');
+  const superRows = ['renaissances', 'tokens', 'achievements'].map((key) => {
+    const value = el('span', { class: 'req__value' });
+    const fill = el('div', { class: 'bar__fill' });
+    const label = { renaissances: 'Renaissances', tokens: 'Tokens générés dans la partie (+5 000 %)', achievements: 'Succès (sauf « Je suis artificielle »)' }[key];
+    const row = el('div', { class: 'req' }, [el('span', { class: 'req__label', text: label }), value, el('div', { class: 'bar' }, [fill])]);
+    return { key, row, value, fill };
+  });
+  document.getElementById('super-reqs').replaceChildren(...superRows.map((r) => r.row));
   let historyKey = -1;
 
   return {
@@ -131,13 +143,30 @@ export function createRebirthPanel(engine, fmt) {
       setText(next, formatMultiplier(prev.next, f));
       setBar(bar, p.ratio);
       const ready = engine.canRebirth();
+      const maxed = s.renaissances >= CONFIG.prestige.maxRenaissances;
+      if (maxed) setText(next, '—');
       setText(
         text,
-        ready
+        maxed
+          ? `Maximum de ${CONFIG.prestige.maxRenaissances} renaissances atteint : place à la Super Renaissance.`
+          : ready
           ? `Seuil atteint : ${formatNumber(p.have, f)} tokens générés pendant cette partie. Vous pouvez renaître quand vous le souhaitez — rien ne se déclenche automatiquement.`
           : `Générez ${formatNumber(p.need, f)} tokens pendant cette partie (${formatNumber(p.have, f)} pour l'instant, ${formatPercent(p.ratio, { signed: false })}).`,
       );
       setDisabled(btn, !ready);
+
+      const st = superStatus(s);
+      for (const r of superRows) {
+        const item = st[r.key];
+        const fmtv = (v) => (r.key === 'tokens' ? formatNumber(v, f) : String(v));
+        setText(r.value, `${fmtv(Math.min(item.have, item.need))} / ${fmtv(item.need)}`);
+        setBar(r.fill, item.need > 0 ? item.have / item.need : 1);
+        toggleClass(r.row, 'is-done', item.ok);
+      }
+      const missing = st.achievements.missing;
+      setText(superMissing, missing.length ? `Succès manquants : ${missing.slice(0, 6).map((a) => a.name).join(', ')}${missing.length > 6 ? ` et ${missing.length - 6} autres` : ''}.` : 'Tous les succès requis sont obtenus.');
+      setDisabled(superBtn, !st.ready);
+      toggleClass(superCard, 'is-ready', st.ready);
 
       if (historyKey !== s.rebirthHistory.length) {
         historyKey = s.rebirthHistory.length;

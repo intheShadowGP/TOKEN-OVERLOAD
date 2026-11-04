@@ -1962,3 +1962,80 @@ button.top-stat:hover {
   font-size: 13.5px;
   color: var(--text-dim);
 }
+
+/* ───────── Super Renaissance ───────── */
+
+.super-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgb(242 196 109 / 0.35);
+  background:
+    radial-gradient(600px 200px at 50% 0%, rgb(242 196 109 / 0.12), transparent 70%),
+    radial-gradient(500px 220px at 100% 100%, rgb(145 101 255 / 0.14), transparent 70%),
+    rgb(32 39 53 / 0.4);
+}
+
+.super-card.is-ready {
+  box-shadow: 0 0 0 1px rgb(242 196 109 / 0.35), 0 14px 40px -16px rgb(242 196 109 / 0.7);
+}
+
+.super-card__head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.super-card__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: var(--gold);
+  background: rgb(242 196 109 / 0.12);
+  box-shadow: 0 0 0 1px rgb(242 196 109 / 0.35) inset;
+}
+
+.super-card__icon .icon {
+  width: 26px;
+  height: 26px;
+}
+
+.super-card__title {
+  font-size: 17px;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--gold), #e3a4f5, var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.super-card .btn {
+  align-self: center;
+}
+
+.btn--super {
+  border-color: rgb(242 196 109 / 0.6);
+  background: linear-gradient(135deg, #c9973f, #c065e8 55%, #3987ff);
+}
+
+.btn--super:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px rgb(242 196 109 / 0.5), 0 12px 34px -10px rgb(242 196 109 / 0.8);
+}
+
+.rebirth-fx.is-super {
+  background: radial-gradient(circle at 50% 50%, rgb(242 196 109 / 0.28), rgb(145 101 255 / 0.25) 35%, rgb(5 7 11 / 0.95) 70%);
+}
+
+.rebirth-fx.is-super .rebirth-fx__count,
+.rebirth-fx.is-super .rebirth-fx__title {
+  background: linear-gradient(90deg, var(--gold), #e3a4f5, var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

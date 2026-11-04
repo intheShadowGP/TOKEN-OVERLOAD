@@ -12,7 +12,7 @@ import { sanitizeSettings } from './settings.js';
 import { earnedGradeIndex, lifetimeGradeStats } from './progression.js';
 import { ACHIEVEMENT_MAP } from '../data/achievements.js';
 import { EVENT_MAP } from '../data/events.js';
-import { AUTOCLICKER_MAP, BUILDING_MAP, CLICK_UPGRADE_MAP } from '../data/upgrades.js';
+import { AUTOCLICKER_MAP, BOOSTER_MAP, BUILDING_MAP, CLICK_UPGRADE_MAP } from '../data/upgrades.js';
 
 export const SAVE_FORMAT = 'token-overload-save';
 const MAX = CONFIG.maxValue;
@@ -47,6 +47,7 @@ const NUMERIC = {
   autoClicks: [0, 1e15, true],
   totalBuildingsBought: [0, 1e9, true],
   renaissances: [0, CONFIG.prestige.maxRenaissances, true],
+  superRenaissances: [0, CONFIG.superRebirth.max, true],
   gradeIndex: [0, 11, true],
   bestGradeIndex: [0, 11, true],
   bestTps: [0, MAX, false],
@@ -143,6 +144,16 @@ export function sanitizeState(data) {
     }
   }
 
+  if (d.boosters !== undefined) {
+    if (!isObj(d.boosters)) errors.push('boosters');
+    else {
+      for (const key of Object.keys(d.boosters)) {
+        if (BOOSTER_MAP.has(key) && d.boosters[key] === true) s.boosters[key] = true;
+        else errors.push(`boosters.${key.slice(0, 40)}`);
+      }
+    }
+  }
+
   if (d.achievements !== undefined) {
     if (!isObj(d.achievements)) errors.push('achievements');
     else {
@@ -168,6 +179,9 @@ export function sanitizeState(data) {
       ? { n: r.n, generated: r.generated, duration: r.duration, at: r.at }
       : null,
   );
+  s.superHistory = arrayOf(d.superHistory, CONFIG.superRebirth.max, 'superHistory', errors, (r) =>
+    isNum(r.n, 1, CONFIG.superRebirth.max, true) && isNum(r.generated, 0, MAX, false) && isNum(r.at, 0, 1e10, false) ? { n: r.n, generated: r.generated, at: r.at } : null,
+  );
   s.log = arrayOf(d.log, CONFIG.logSize, 'log', errors, (e) =>
     isNum(e.t, 0, 8.64e15, false) && typeof e.kind === 'string' && LOG_KINDS.has(e.kind) && typeof e.text === 'string'
       ? { t: e.t, kind: e.kind, text: cleanText(e.text) }
@@ -186,6 +200,7 @@ export function sanitizeState(data) {
     if (done && req && !s.upgrades[req]) errors.push(`upgrades.${id} (prérequis)`);
   }
   if (s.rebirthHistory.length > s.renaissances) errors.push('rebirthHistory');
+  if (s.superHistory.length > s.superRenaissances) errors.push('superHistory');
 
   // Un grade se mérite : il est recalculé à partir des statistiques.
   s.gradeIndex = Math.min(s.gradeIndex, earnedGradeIndex(s));
@@ -204,6 +219,7 @@ export function sanitizeState(data) {
   }
   if (s.rebirthHistory.length > s.renaissances) s.rebirthHistory = s.rebirthHistory.slice(-s.renaissances || s.rebirthHistory.length);
   if (s.renaissances === 0) s.rebirthHistory = [];
+  s.superHistory = s.superHistory.slice(-s.superRenaissances || s.superHistory.length).slice(0, s.superRenaissances);
 
   s.v = SAVE_VERSION;
   return { state: s, errors };
@@ -215,6 +231,16 @@ export function sanitizeState(data) {
 const MIGRATIONS = {
   // v2 : grades remis à zéro à chaque renaissance ; l'ancien grade devient le record
   1: (d) => ({ ...d, v: 2, bestGradeIndex: d.gradeIndex }),
+  // v3 : boosters et Super Renaissance ; les renaissances sont plafonnées à 100
+  2: (d) => ({
+    ...d,
+    v: 3,
+    boosters: {},
+    superRenaissances: 0,
+    superHistory: [],
+    renaissances: typeof d.renaissances === 'number' ? Math.min(d.renaissances, CONFIG.prestige.maxRenaissances) : d.renaissances,
+    rebirthHistory: Array.isArray(d.rebirthHistory) ? d.rebirthHistory.filter((r) => !(r?.n > CONFIG.prestige.maxRenaissances)) : d.rebirthHistory,
+  }),
 };
 
 export function migrate(data) {

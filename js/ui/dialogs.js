@@ -244,7 +244,7 @@ export function showOffline(seconds, gained, fmt) {
 
 // ───── renaissance ─────
 
-export function createRebirthFlow({ engine, fmt, audio, motionReduced, onDone }) {
+export function createRebirthFlow({ engine, fmt, audio, motionReduced, onDone, onSuper }) {
   const dialog = /** @type {HTMLDialogElement} */ ($id('dlg-rebirth'));
   const check = /** @type {HTMLInputElement} */ ($id('dlg-rb-check'));
   const confirmBtn = /** @type {HTMLButtonElement} */ ($id('dlg-rb-confirm'));
@@ -262,57 +262,72 @@ export function createRebirthFlow({ engine, fmt, audio, motionReduced, onDone })
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  async function play() {
-    if (running || !engine.canRebirth()) return;
+  /**
+   * Animation commune : compte à rebours, distorsion, action, titre, particules.
+   * @param {{ can: () => boolean, act: () => any, title: (r: any) => string, subtitle: string | ((r: any) => string), epic?: boolean }} o
+   */
+  async function animate({ can, act, title, subtitle, epic = false }) {
+    if (running || !can()) return null;
     running = true;
-    dialog.close();
-    const f = fmt();
-    const before = rebirthPreview(engine.state);
     const reduced = motionReduced();
     const countdown = engine.state.settings.rebirthCountdown && !reduced;
 
     fx.hidden = false;
+    fx.classList.toggle('is-super', epic);
     setText(fxTitle, '');
     setText(fxMult, '');
     fxTitle.classList.remove('is-in');
     if (!reduced) app.classList.add('is-distorting');
 
     if (countdown) {
-      for (const n of ['3', '2', '1']) {
+      for (const n of epic ? ['5', '4', '3', '2', '1'] : ['3', '2', '1']) {
         count.classList.remove('is-tick');
         void count.offsetWidth;
         setText(count, n);
         count.classList.add('is-tick');
         audio.tick();
-        if (engine.state.settings.particles) particles.burst(window.innerWidth / 2, window.innerHeight / 2, 40, { speed: 300, ring: true });
+        if (engine.state.settings.particles) particles.burst(window.innerWidth / 2, window.innerHeight / 2, epic ? 90 : 40, { speed: epic ? 450 : 300, ring: true });
         await wait(900);
       }
     } else if (!reduced) await wait(600);
 
-    const record = engine.rebirth();
+    const record = act();
     setText(count, '');
     if (!record) {
       fx.hidden = true;
       app.classList.remove('is-distorting');
       running = false;
-      return;
+      return null;
     }
     audio.rebirth();
-    setText(fxTitle, `RENAISSANCE N°${record.n}`);
-    setText(fxMult, `Multiplicateur ${formatMultiplier(before.current, f)} → ${formatMultiplier(before.next, f)}`);
+    setText(fxTitle, title(record));
+    setText(fxMult, typeof subtitle === 'function' ? subtitle(record) : subtitle);
     fxTitle.classList.add('is-in');
     app.classList.remove('is-distorting');
     if (engine.state.settings.particles && !reduced) {
-      for (let i = 0; i < 4; i++) {
-        particles.burst(window.innerWidth / 2, window.innerHeight / 2, 60, { speed: 520 + i * 120, size: 3.5, life: 1.4, ring: i === 0 });
+      for (let i = 0; i < (epic ? 12 : 4); i++) {
+        particles.burst(window.innerWidth / 2, window.innerHeight / 2, epic ? 120 : 60, { speed: 520 + i * 120, size: 3.5, life: 1.4, ring: i % 3 === 0 });
         await wait(140);
       }
     }
-    await wait(reduced ? 1200 : 2200);
+    await wait(reduced ? 1200 : epic ? 4000 : 2200);
     fx.hidden = true;
     particles.clear();
     running = false;
-    onDone(record);
+    return record;
+  }
+
+  async function play() {
+    dialog.close();
+    const f = fmt();
+    const before = rebirthPreview(engine.state);
+    const record = await animate({
+      can: () => engine.canRebirth(),
+      act: () => engine.rebirth(),
+      title: (r) => `RENAISSANCE N°${r.n}`,
+      subtitle: `Multiplicateur ${formatMultiplier(before.current, f)} → ${formatMultiplier(before.next, f)}`,
+    });
+    if (record) onDone(record);
   }
 
   confirmBtn.addEventListener('click', play);
@@ -330,6 +345,17 @@ export function createRebirthFlow({ engine, fmt, audio, motionReduced, onDone })
       check.checked = false;
       confirmBtn.disabled = true;
       openDialog(dialog);
+    },
+    /** Super Renaissance (confirmation déjà obtenue). */
+    async playSuper() {
+      const record = await animate({
+        can: () => engine.superStatus().ready,
+        act: () => engine.superRebirth(),
+        title: (r) => `SUPER RENAISSANCE N°${r.n}`,
+        subtitle: () => `Je suis artificielle. Multiplicateur permanent ${formatMultiplier(engine.rates.prestige, fmt())}`,
+        epic: true,
+      });
+      if (record) onSuper(record);
     },
     get running() {
       return running;

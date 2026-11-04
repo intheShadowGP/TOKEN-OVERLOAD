@@ -50,13 +50,11 @@ test('paliers : ×2 à 25, 50, 100…', () => {
   assert.equal(buildingRawTps(cdi, 25), 0.1 * 25 * 2);
 });
 
-test('multiplicateur de renaissance : ×4 jusqu’à la 9e, puis ×2 à partir de la 10e', () => {
-  assert.deepEqual([0, 1, 2, 3, 4].map(prestigeMultiplier), [1, 4, 16, 64, 256]);
-  assert.equal(prestigeMultiplier(9), 4 ** 9);
-  assert.equal(prestigeMultiplier(10), 4 ** 9 * 2);
-  assert.equal(prestigeMultiplier(11), 4 ** 9 * 4);
-  for (let n = 10; n < 40; n++) assert.equal(prestigeMultiplier(n + 1) / prestigeMultiplier(n), 2);
-  for (let n = 0; n < 9; n++) assert.equal(prestigeMultiplier(n + 1) / prestigeMultiplier(n), 4);
+test('multiplicateur de renaissance : ×2 par renaissance, ×1 000 000 par Super Renaissance', () => {
+  assert.deepEqual([0, 1, 2, 3, 4].map((n) => prestigeMultiplier(n)), [1, 2, 4, 8, 16]);
+  for (let n = 0; n < 100; n++) assert.equal(prestigeMultiplier(n + 1) / prestigeMultiplier(n), 2);
+  assert.equal(prestigeMultiplier(0, 1), 1e6);
+  assert.equal(prestigeMultiplier(3, 2), 8 * 1e12);
 });
 
 test('le multiplicateur global s’applique exactement une fois au TPS et au clic', () => {
@@ -66,15 +64,15 @@ test('le multiplicateur global s’applique exactement une fois au TPS et au cli
   const b = reborn.rates;
   assert.ok(close(a.rawTps, 10 * 0.1 + 3 * 0.5));
   assert.ok(close(b.rawTps, a.rawTps), 'la production brute ne dépend pas des renaissances');
-  assert.ok(close(b.tps, a.tps * 16), `TPS ×16 : ${b.tps} vs ${a.tps}`);
-  assert.ok(close(b.click, a.click * 16), `clic ×16 : ${b.click} vs ${a.click}`);
+  assert.ok(close(b.tps, a.tps * 4), `TPS ×4 : ${b.tps} vs ${a.tps}`);
+  assert.ok(close(b.click, a.click * 4), `clic ×4 : ${b.click} vs ${a.click}`);
   assert.equal(a.click, 1);
 });
 
 test('bonus de succès et de grade multipliés au multiplicateur de renaissance', () => {
   const e = makeEngine({ renaissances: 1, gradeIndex: 2, achievements: { 'first-token': 0, 'tokens-1m': 0 } });
   const r = computeRates(e.state);
-  assert.ok(close(r.global, 4 * (1 + 0.03) * (1 + 0.2)));
+  assert.ok(close(r.global, 2 * (1 + 0.03) * (1 + 0.2)));
 });
 
 test('clic : base la plus haute + part de production brute', () => {

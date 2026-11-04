@@ -13,6 +13,7 @@ import { createConfirm, createRebirthFlow, createSettingsDialog, createStatsDial
 import { createTutorial } from './tutorial.js';
 import { formatMultiplier, formatNumber, formatPercent } from '../core/numbers.js';
 import { EVENT_KINDS } from '../data/events.js';
+import { CONFIG } from '../core/config.js';
 
 const FAST_MS = 66;
 const SLOW_MS = 250;
@@ -106,6 +107,7 @@ export function createUI(engine, { actions }) {
   const stats = createStatsDialog(engine, fmt);
   const dotClick = $('#dot-click');
   const dotRebirth = $('#dot-rebirth');
+  const dotBoosters = $('#dot-boosters');
 
   function refreshPanels(all = false) {
     shop.update();
@@ -114,7 +116,8 @@ export function createUI(engine, { actions }) {
     if (all || activeTab === 'rebirth') rebirthPanel.update();
     if (all || activeTab === 'log') logPanel.update();
     dotClick.hidden = activeTab === 'click' || !shop.hasAffordableClick();
-    dotRebirth.hidden = !engine.canRebirth();
+    dotBoosters.hidden = activeTab === 'boosters' || !shop.hasAffordableBooster();
+    dotRebirth.hidden = !engine.canRebirth() && !engine.superStatus().ready;
   }
 
   // ───── renaissance ─────
@@ -131,8 +134,29 @@ export function createUI(engine, { actions }) {
       hud.fast();
       hud.slow();
     },
+    onSuper(record) {
+      audio.grade();
+      toaster.show({ kind: 'achievement', kicker: 'Super Renaissance', icon: 'infinity', title: `Super Renaissance n°${record.n}`, text: `Je suis artificielle. Multiplicateur permanent : ${formatMultiplier(engine.rates.prestige, fmt())}. Les renaissances repartent de zéro.`, duration: 10000 });
+      shop.refreshStructure();
+      selectTab('infra');
+      refreshPanels(true);
+      hud.fast();
+      hud.slow();
+    },
   });
-  for (const id of ['#btn-rebirth', '#btn-rebirth-quick']) $(id).addEventListener('click', () => rebirth.open());
+  for (const id of ['#btn-rebirth', '#btn-rebirth-quick']) {
+    $(id).addEventListener('click', () => (engine.state.renaissances >= CONFIG.prestige.maxRenaissances ? selectTab('rebirth') : rebirth.open()));
+  }
+  $('#btn-super').addEventListener('click', async () => {
+    if (!engine.superStatus().ready) return;
+    const ok = await confirm({
+      title: 'Déclencher la Super Renaissance ?',
+      text: `Vos ${engine.state.renaissances} renaissances, votre partie en cours et votre grade repartent de zéro. En échange : multiplicateur permanent ×1 000 000 et le succès « Je suis artificielle ». Succès et statistiques sont conservés.`,
+      confirmLabel: 'Devenir artificielle',
+      requireCheck: 'Je comprends que mes 100 renaissances repartent de zéro.',
+    });
+    if (ok) rebirth.playSuper();
+  });
 
   // ───── paramètres ─────
 

@@ -73,6 +73,8 @@ export const ACHIEVEMENTS = Object.freeze([
   // — temps & divers —
   { id: 'play-1h', icon: 'clock', reward: 0.01, name: 'Une heure de calcul', text: 'Jouer 1 heure au total.', check: (s) => s.playTime >= 3600 },
   { id: 'play-10h', icon: 'clock', reward: 0.03, name: 'Sans pause café', text: 'Jouer 10 heures au total.', check: (s) => s.playTime >= 36000 },
+  // — fin de jeu : débloqué uniquement par la Super Renaissance —
+  { id: 'i-am-artificial', icon: 'infinity', reward: 1, name: 'Je suis artificielle', text: 'Accomplir la Super Renaissance. Vous n’êtes plus aux commandes : vous êtes le modèle.', check: (s) => s.superRenaissances >= 1 },
   { id: 'export', icon: 'vault', reward: 0.01, name: 'Paranoïa saine', text: 'Exporter une sauvegarde. La règle du 3-2-1 vous salue.', check: (s) => s.exports >= 1 },
 ]);
 

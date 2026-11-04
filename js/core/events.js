@@ -76,12 +76,14 @@ export function pickEvent(s, rng) {
  * @param {object} def
  * @param {{ tps: number, click: number }} rates
  * @param {(n: number) => void} addTokens
- * @returns {{ def: object, blocked?: 'shield' | 'firewall' | 'immunity', amount: number }}
+ * @param {{ protection?: boolean, events?: number }} [boost] effets des boosters
+ * @returns {{ def: object, blocked?: 'booster' | 'shield' | 'firewall' | 'immunity', amount: number }}
  */
-export function applyEvent(s, def, rates, addTokens) {
+export function applyEvent(s, def, rates, addTokens, boost = {}) {
   if (def.kind === 'negative') {
     let blocked = null;
-    if (s.clock < s.shieldUntil) blocked = 'shield';
+    if (boost.protection) blocked = 'booster';
+    else if (s.clock < s.shieldUntil) blocked = 'shield';
     else if (def.loss && s.clock < s.lossImmuneUntil) blocked = 'immunity';
     else if (s.firewallCharges > 0) {
       s.firewallCharges -= 1;
@@ -104,7 +106,7 @@ export function applyEvent(s, def, rates, addTokens) {
     s.tokens = clampValue(s.tokens - amount);
   }
   if (def.effects && def.duration) {
-    const endsAt = s.clock + def.duration;
+    const endsAt = s.clock + def.duration * (def.kind === 'negative' ? 1 : boost.events ?? 1);
     const existing = s.effects.find((fx) => fx.id === def.id);
     if (existing) existing.endsAt = Math.max(existing.endsAt, endsAt);
     else s.effects.push({ id: def.id, endsAt });

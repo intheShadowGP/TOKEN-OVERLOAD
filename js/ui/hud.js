@@ -2,7 +2,8 @@
 import { el, icon, setBar, setDisabled, setText, toggleClass } from './dom.js';
 import { formatDuration, formatMultiplier, formatNumber } from '../core/numbers.js';
 import { currentGrade, nextGradeProgress } from '../core/progression.js';
-import { rebirthPreview, rebirthProgress } from '../core/prestige.js';
+import { rebirthPreview, rebirthProgress, superThreshold } from '../core/prestige.js';
+import { CONFIG } from '../core/config.js';
 import { EVENT_MAP } from '../data/events.js';
 
 const $id = (id) => document.getElementById(id);
@@ -138,6 +139,19 @@ export function createHud(engine, fmt) {
       }
     }
 
+    if (s.renaissances >= CONFIG.prestige.maxRenaissances) {
+      // 100 renaissances : la carte suit la Super Renaissance
+      const need = superThreshold();
+      const ready = engine.superStatus().ready;
+      setText(n.rebirthPreview, 'Super Renaissance');
+      setBar(n.rebirthBar, s.runGenerated / need);
+      setText(n.rebirthText, `${formatNumber(s.runGenerated, f)} / ${formatNumber(need, f)} générés`);
+      setDisabled(n.rebirthQuick, false);
+      setText(n.rebirthQuick, 'Voir');
+      toggleClass(n.rebirthCard, 'is-ready', ready);
+      return;
+    }
+    setText(n.rebirthQuick, 'Renaître');
     const p = rebirthProgress(s);
     const prev = rebirthPreview(s);
     const ready = engine.canRebirth();

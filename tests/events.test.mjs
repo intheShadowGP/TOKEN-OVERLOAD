@@ -109,7 +109,7 @@ test('cumul des multiplicateurs borné', () => {
 });
 
 test('compatibles avec les renaissances : effets temporaires effacés, protections conservées', () => {
-  const e = makeEngine({ runGenerated: 1e6, totalGenerated: 1e6 });
+  const e = makeEngine({ runGenerated: 1e8, totalGenerated: 1e8 });
   e.triggerEvent('nvidia-delivery');
   e.triggerEvent('firewall');
   e.rebirth();

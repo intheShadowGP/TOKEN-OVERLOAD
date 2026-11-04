@@ -20,26 +20,26 @@ export const CONFIG = Object.freeze({
   maxManualClicksPerSecond: 25,
 
   prestige: Object.freeze({
-    /** Tokens à générer pendant la partie en cours pour la première renaissance. */
-    baseThreshold: 1e6,
     /**
-     * Le seuil suivant = seuil précédent × le facteur suivant de cette liste,
-     * parcourue en boucle : 1 M, 100 M, 1 Md, 100 Md, 1 T, 100 T, 1 Qa…
+     * Seuils de renaissance : table calibrée par simulation dans
+     * js/data/prestige.js (voir tests/calibrate.mjs).
+     * Chaque renaissance multiplie la production par multiplierBase.
      */
-    thresholdSteps: Object.freeze([100, 10]),
-    /**
-     * À partir de la renaissance n° lateThresholdFrom, son seuil vaut celui de
-     * la renaissance précédente × lateThresholdGrowth (36 = +3 500 %).
-     */
-    lateThresholdFrom: 15,
-    lateThresholdGrowth: 36,
-    /** Chaque renaissance multiplie la production par multiplierBase… */
-    multiplierBase: 4,
-    /** …puis par lateMultiplierBase à partir de la renaissance n° lateMultiplierFrom. */
-    lateMultiplierFrom: 10,
-    lateMultiplierBase: 2,
-    /** Garde-fou : le multiplicateur et les seuils restent représentables. */
-    maxRenaissances: 400,
+    multiplierBase: 2,
+    /** Nombre maximal de renaissances : la suite passe par la Super Renaissance. */
+    maxRenaissances: 100,
+  }),
+
+  superRebirth: Object.freeze({
+    /** Renaissances nécessaires. */
+    renaissances: 100,
+    /** Tokens à générer dans la partie : seuil de la 100e renaissance × tokenFactor (51 = +5 000 %). */
+    tokenFactor: 51,
+    /** Succès exclu de la condition « tous les succès » (il récompense la Super Renaissance). */
+    finalAchievement: 'i-am-artificial',
+    /** Multiplicateur permanent accordé par chaque Super Renaissance. */
+    multiplier: 1e6,
+    max: 40,
   }),
 
   /** Bonus permanent de production par grade atteint (0,1 = +10 %). */

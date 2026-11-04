@@ -3,15 +3,15 @@
  *
  * Chaîne de production (chaque multiplicateur appliqué exactement une fois) :
  *   brut       = Σ base × quantité × paliers
- *   global     = renaissance (×4 par renaissance, ×2 dès la 10e) × (1 + succès) × (1 + grades)
- *   TPS        = brut × global × événements(production)
- *   clic       = (base de clic + part × brut) × global × événements(clic)
+ *   global     = renaissance (2^n × super) × (1 + succès) × (1 + grades)
+ *   TPS        = brut × global × événements(production) × boosters(production)
+ *   clic       = (base de clic + part × brut) × global × événements(clic) × boosters(clic)
  */
 import { CONFIG } from './config.js';
 import { clampValue } from './numbers.js';
 import { activeMultipliers } from './events.js';
 import { ACHIEVEMENT_MAP } from '../data/achievements.js';
-import { AUTOCLICKERS, BUILDINGS, CLICK_UPGRADES } from '../data/upgrades.js';
+import { AUTOCLICKERS, BOOSTERS, BUILDINGS, CLICK_UPGRADES } from '../data/upgrades.js';
 
 const g = CONFIG.costGrowth;
 
@@ -57,12 +57,23 @@ export function rawTps(s) {
   return clampValue(total);
 }
 
-/** Multiplicateur permanent après n renaissances : ×4 chacune, puis ×2 à partir de la 10e. */
-export function prestigeMultiplier(renaissances) {
-  const P = CONFIG.prestige;
-  const early = Math.min(renaissances, P.lateMultiplierFrom - 1);
-  const late = Math.max(0, renaissances - early);
-  return clampValue(P.multiplierBase ** early * P.lateMultiplierBase ** late);
+/** Multiplicateur permanent : ×2 par renaissance, ×1 000 000 par Super Renaissance. */
+export function prestigeMultiplier(renaissances, superRenaissances = 0) {
+  return clampValue(CONFIG.prestige.multiplierBase ** renaissances * CONFIG.superRebirth.multiplier ** superRenaissances);
+}
+
+/** Effets cumulés des boosters achetés pendant la partie. */
+export function boosterEffects(s) {
+  const fx = { production: 1, click: 1, costFactor: 1, protection: false, events: 1 };
+  for (const b of BOOSTERS) {
+    if (!s.boosters[b.id]) continue;
+    if (b.effect.production) fx.production *= b.effect.production;
+    if (b.effect.click) fx.click *= b.effect.click;
+    if (b.effect.costFactor) fx.costFactor *= b.effect.costFactor;
+    if (b.effect.protection) fx.protection = true;
+    if (b.effect.events) fx.events *= b.effect.events;
+  }
+  return fx;
 }
 
 export function achievementBonus(s) {
@@ -77,7 +88,7 @@ export function gradeBonus(s) {
 
 /** Multiplicateur global permanent (renaissance × succès × grades). */
 export function globalMultiplier(s) {
-  return clampValue(prestigeMultiplier(s.renaissances) * (1 + achievementBonus(s)) * (1 + gradeBonus(s)));
+  return clampValue(prestigeMultiplier(s.renaissances, s.superRenaissances) * (1 + achievementBonus(s)) * (1 + gradeBonus(s)));
 }
 
 /** Valeur de base d'un clic et part de production ajoutée. */
@@ -108,14 +119,15 @@ export function autoClickRate(s) {
  */
 export function computeRates(s) {
   const raw = rawTps(s);
-  const prestige = prestigeMultiplier(s.renaissances);
+  const prestige = prestigeMultiplier(s.renaissances, s.superRenaissances);
+  const boost = boosterEffects(s);
   const achievements = achievementBonus(s);
   const grades = gradeBonus(s);
   const global = clampValue(prestige * (1 + achievements) * (1 + grades));
   const events = activeMultipliers(s);
   const { base, share } = clickProfile(s);
-  const tps = clampValue(raw * global * events.production);
-  const click = clampValue((base + share * raw) * global * events.click);
+  const tps = clampValue(raw * global * events.production * boost.production);
+  const click = clampValue((base + share * raw) * global * events.click * boost.click);
   return {
     rawTps: raw,
     tps,
@@ -129,6 +141,9 @@ export function computeRates(s) {
     grades,
     eventProduction: events.production,
     eventClick: events.click,
+    boostProduction: boost.production,
+    boostClick: boost.click,
+    costFactor: boost.costFactor,
   };
 }
 
