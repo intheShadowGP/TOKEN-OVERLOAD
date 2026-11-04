@@ -81,9 +81,9 @@ export const CLICK_UPGRADES = Object.freeze([
  * et les grades) qui rapportent la puissance de clic courante.
  */
 export const AUTOCLICKERS = Object.freeze([
-  { id: 'ahk-macro', icon: 'macro', cost: 2000, growth: 1.45, rate: 0.5, maxLevel: 10, name: 'Macro AutoHotkey', text: "Un script de 3 lignes copié sur un forum de 2009. +0,5 clic par seconde par niveau." },
-  { id: 'selenium-bot', icon: 'agent', cost: 5e6, growth: 1.5, rate: 2, maxLevel: 10, name: 'Bot Selenium', text: "Il clique, il scrolle, il accepte les cookies à votre place. +2 clics par seconde par niveau." },
-  { id: 'mouse-farm', icon: 'hand', cost: 1e11, growth: 1.55, rate: 5, maxLevel: 10, name: 'Ferme de souris robotisées', text: "Des bras robotiques et des souris par centaines. +5 clics par seconde par niveau." },
+  { id: 'ahk-macro', icon: 'macro', cost: 2000, growth: 1.45, rate: 2, maxLevel: 10, name: 'Macro AutoHotkey', text: "Un script de 3 lignes copié sur un forum de 2009. +0,5 clic par seconde par niveau." },
+  { id: 'selenium-bot', icon: 'agent', cost: 5e6, growth: 1.5, rate: 5, maxLevel: 10, name: 'Bot Selenium', text: "Il clique, il scrolle, il accepte les cookies à votre place. +2 clics par seconde par niveau." },
+  { id: 'mouse-farm', icon: 'hand', cost: 1e11, growth: 1.55, rate: 10, maxLevel: 10, name: 'Ferme de souris robotisées', text: "Des bras robotiques et des souris par centaines. +5 clics par seconde par niveau." },
 ]);
 
 export const BUILDING_MAP = new Map(BUILDINGS.map((b) => [b.id, b]));
