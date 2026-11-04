@@ -71,7 +71,10 @@ export function createHud(engine, fmt) {
     if (s.totalClicks === 0) hint = 'Cliquez sur le token pour générer vos premiers tokens.';
     else if (r.rawTps === 0) hint = s.tokens >= 15 ? 'Achetez un « PC du CDI » pour produire automatiquement.' : 'Encore quelques clics : un PC du CDI coûte 15 tokens.';
     else if (r.autoRate > 0) hint = `Auto-clics : ${formatNumber(r.autoRate)} par seconde.`;
-    else if (engine.canRebirth()) hint = 'Renaissance disponible : multiplicateur ×4 à la clé.';
+    else if (engine.canRebirth()) {
+      const p = rebirthPreview(s);
+      hint = `Renaissance disponible : multiplicateur ${formatMultiplier(p.next / p.current)} à la clé.`;
+    }
     else hint = 'Astuce : la production double à 25, 50, 100… exemplaires.';
     setText(n.hint, hint);
   }

@@ -3,7 +3,7 @@
  *
  * Chaîne de production (chaque multiplicateur appliqué exactement une fois) :
  *   brut       = Σ base × quantité × paliers
- *   global     = renaissance (4^n) × (1 + succès) × (1 + grades)
+ *   global     = renaissance (×4 par renaissance, ×2 dès la 10e) × (1 + succès) × (1 + grades)
  *   TPS        = brut × global × événements(production)
  *   clic       = (base de clic + part × brut) × global × événements(clic)
  */
@@ -57,8 +57,12 @@ export function rawTps(s) {
   return clampValue(total);
 }
 
+/** Multiplicateur permanent après n renaissances : ×4 chacune, puis ×2 à partir de la 10e. */
 export function prestigeMultiplier(renaissances) {
-  return clampValue(CONFIG.prestige.multiplierBase ** renaissances);
+  const P = CONFIG.prestige;
+  const early = Math.min(renaissances, P.lateMultiplierFrom - 1);
+  const late = Math.max(0, renaissances - early);
+  return clampValue(P.multiplierBase ** early * P.lateMultiplierBase ** late);
 }
 
 export function achievementBonus(s) {

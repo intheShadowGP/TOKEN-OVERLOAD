@@ -50,8 +50,13 @@ test('paliers : ×2 à 25, 50, 100…', () => {
   assert.equal(buildingRawTps(cdi, 25), 0.1 * 25 * 2);
 });
 
-test('multiplicateur de renaissance = 4^n', () => {
+test('multiplicateur de renaissance : ×4 jusqu’à la 9e, puis ×2 à partir de la 10e', () => {
   assert.deepEqual([0, 1, 2, 3, 4].map(prestigeMultiplier), [1, 4, 16, 64, 256]);
+  assert.equal(prestigeMultiplier(9), 4 ** 9);
+  assert.equal(prestigeMultiplier(10), 4 ** 9 * 2);
+  assert.equal(prestigeMultiplier(11), 4 ** 9 * 4);
+  for (let n = 10; n < 40; n++) assert.equal(prestigeMultiplier(n + 1) / prestigeMultiplier(n), 2);
+  for (let n = 0; n < 9; n++) assert.equal(prestigeMultiplier(n + 1) / prestigeMultiplier(n), 4);
 });
 
 test('le multiplicateur global s’applique exactement une fois au TPS et au clic', () => {

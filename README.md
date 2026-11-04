@@ -14,7 +14,7 @@ Jeu incrémental (*idle / clicker*) humoristique sur la consommation de tokens d
 | Clic | Gros bouton token animé, particules, gains flottants, 1 token par clic au départ ; 15 améliorations de clic (valeur de base jusqu'à 500 M, ou % de la production) ; 4 auto-cliqueurs (2, 5, 10 et 100 clics/s par niveau) qui génèrent de vrais clics. |
 | Production | 25 infrastructures en 5 paliers (Informatique basique → Technologies absurdes). Coût exponentiel `base × 1,15^n`, achat ×1 / ×10 / ×25 / Max, production ×2 à 25, 50, 100, 150, 200… exemplaires, temps d'amortissement affiché. |
 | Grades | 12 grades (Noobie → Omniscience). Le grade **repart de Noobie à chaque renaissance** : clusters achetés et clics comptent depuis la dernière renaissance, le nombre de renaissances est cumulé. Barres de progression, +10 % de production par grade détenu, meilleur grade atteint conservé. |
-| Renaissance | Seuil de tokens générés dans la partie (1 M, 100 M, 1 Md, 100 Md, 1 T, 100 T… : ×100 puis ×10 en alternance), avertissement, confirmation explicite, compte à rebours, distorsion et particules. Multiplicateur permanent `4^renaissances` sur le clic et la production. Jamais automatique. |
+| Renaissance | Seuil de tokens générés dans la partie (1 M, 100 M, 1 Md, 100 Md, 1 T… : ×100 puis ×10 en alternance ; à partir de la 15e renaissance, chaque seuil vaut 36 fois le précédent, soit +3 500 %), avertissement, confirmation explicite, compte à rebours, distorsion et particules. Multiplicateur permanent sur le clic et la production : ×4 par renaissance jusqu’à la 9e, puis ×2 à partir de la 10e. Jamais automatique. |
 | Succès | 49 succès, chacun avec un bonus permanent (+1 à +10 %). |
 | Événements | 20 événements aléatoires locaux : bonus, incidents (temporaires et plafonnés), rares, défensifs (patch, firewall, audit, sauvegarde immuable). |
 | Statistiques | Partie en cours, historique, progression, graphique de production (échelle logarithmique), historique des renaissances, journal. |
@@ -105,7 +105,7 @@ token-overload/
 
 ```
 brut    = Σ production_de_base × quantité × paliers
-global  = 4^renaissances × (1 + bonus de succès) × (1 + 0,1 × grade)
+global  = renaissance (×4 chacune, ×2 dès la 10e) × (1 + bonus de succès) × (1 + 0,1 × grade)
 TPS     = brut × global × événements(production)
 clic    = (base de clic + part × brut) × global × événements(clic)
 ```
@@ -118,9 +118,9 @@ Le jeu utilise des flottants double précision (jusqu'à ~1,8e308), largement su
 
 ### Équilibrage
 
-Les simulations (`npm run simulate` : un joueur glouton qui clique 4 fois par seconde) donnent environ 15 min pour chacune des deux premières renaissances, puis des parties très courtes (quelques secondes) entre la 7e et la 18e, qui rallongent ensuite fortement : environ 30 min pour la 22e, 1 h pour la 23e, puis plus de 15 h à partir de la 24e, quand toutes les infrastructures sont achetées et que le seuil (×31,6 en moyenne par renaissance) dépasse le multiplicateur ×4.
+Les simulations (`npm run simulate` : un joueur glouton qui clique 4 fois par seconde) donnent environ 15 min pour chacune des deux premières renaissances, puis des parties de quelques secondes entre la 6e et la 16e. Ensuite, chaque seuil vaut 36 fois le précédent alors que le multiplicateur ne double plus que : environ 2 min pour la 17e, 14 min pour la 18e, 2 h 30 pour la 19e, 22 h pour la 20e, plus de 2 jours pour la 21e. Le grade Omniscience, qui exige 30 renaissances, n’est donc pas atteignable en pratique avec ces réglages.
 
-Les seuils de renaissance suivent la liste `prestige.thresholdSteps` de `js/core/config.js` (par défaut `[100, 10]`, parcourue en boucle). Les grades, eux, se règlent dans `js/data/levels.js`.
+Tout se règle dans `js/core/config.js`, section `prestige` : `thresholdSteps` (alternance des seuils, `[100, 10]`), `lateThresholdFrom` / `lateThresholdGrowth` (15e renaissance, ×36), `multiplierBase` / `lateMultiplierFrom` / `lateMultiplierBase` (×4, puis ×2 dès la 10e). Les grades se règlent dans `js/data/levels.js`.
 
 ## Tests
 
@@ -130,7 +130,7 @@ npm test
 
 Node.js 22 ou plus suffit : aucune dépendance à installer.
 
-62 tests (`node:test`, sans dépendance) couvrent : achats et coûts, production et delta time, clics et limitation, auto-clics, hors ligne, multiplicateurs (appliqués une seule fois), renaissances (seuils, remis à zéro / conservé, ×4), grades (remise à zéro à la renaissance, meilleur grade conservé, migration des anciennes sauvegardes), succès, événements (tirage, durées, boucliers, plafonds), sauvegarde locale, export/import (empreinte, types, bornes, versions, pollution de prototype, injection de multiplicateurs), réinitialisation, formatage, et un test d'équilibrage.
+64 tests (`node:test`, sans dépendance) couvrent : achats et coûts, production et delta time, clics et limitation, auto-clics, hors ligne, multiplicateurs (appliqués une seule fois), renaissances (seuils, ×36 dès la 15e, multiplicateur ×4 puis ×2, remis à zéro / conservé), grades (remise à zéro à la renaissance, meilleur grade conservé, migration des anciennes sauvegardes), succès, événements (tirage, durées, boucliers, plafonds), sauvegarde locale, export/import (empreinte, types, bornes, versions, pollution de prototype, injection de multiplicateurs), réinitialisation, formatage, et un test d'équilibrage.
 
 ## Crédits et licences
 

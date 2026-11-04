@@ -14,11 +14,15 @@ export function rebirthThreshold(n) {
 
 /** Facteur appliqué au seuil lors de la (i+1)-ième renaissance. */
 export function thresholdGrowth(i) {
+  // passer du seuil de la renaissance n° i+1 à celui de la n° i+2
+  if (i + 2 >= P.lateThresholdFrom) return P.lateThresholdGrowth;
   return P.thresholdSteps[i % P.thresholdSteps.length];
 }
 
 export function canRebirth(s) {
-  return s.renaissances < P.maxRenaissances && s.runGenerated >= rebirthThreshold(s.renaissances);
+  const need = rebirthThreshold(s.renaissances);
+  // un seuil saturé au plafond numérique n'est plus atteignable
+  return s.renaissances < P.maxRenaissances && need < CONFIG.maxValue && s.runGenerated >= need;
 }
 
 export function rebirthProgress(s) {

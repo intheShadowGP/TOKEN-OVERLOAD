@@ -76,6 +76,21 @@ test('après renaissance, la même infrastructure produit exactement ×4', () =>
   assert.ok(close(after, before * 4), `${after} vs ${before * 4}`);
 });
 
+test('à partir de la 15e renaissance, chaque seuil vaut +3 500 % (×36) du précédent', () => {
+  // seuil de la n° k = rebirthThreshold(k - 1)
+  assert.equal(rebirthThreshold(13), 1e26, '14e : alternance ×100 / ×10 jusque-là');
+  assert.ok(close(rebirthThreshold(14) / rebirthThreshold(13), 36), '15e = 14e × 36');
+  for (let k = 15; k < 40; k++) assert.ok(close(rebirthThreshold(k) / rebirthThreshold(k - 1), 36));
+  assert.ok(close(rebirthThreshold(13) / rebirthThreshold(12), 100));
+});
+
+test('un seuil devenu inatteignable (plafond numérique) bloque la renaissance', () => {
+  const e = makeEngine({ renaissances: 300 });
+  e.state.runGenerated = CONFIG.maxValue;
+  e.state.totalGenerated = CONFIG.maxValue;
+  assert.equal(canRebirth(e.state), false);
+});
+
 test('renaissances successives : multiplicateur 4^n', () => {
   const e = makeEngine();
   for (let n = 1; n <= 4; n++) {

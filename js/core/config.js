@@ -27,9 +27,18 @@ export const CONFIG = Object.freeze({
      * parcourue en boucle : 1 M, 100 M, 1 Md, 100 Md, 1 T, 100 T, 1 Qa…
      */
     thresholdSteps: Object.freeze([100, 10]),
-    /** Multiplicateur permanent = base ^ renaissances. */
+    /**
+     * À partir de la renaissance n° lateThresholdFrom, son seuil vaut celui de
+     * la renaissance précédente × lateThresholdGrowth (36 = +3 500 %).
+     */
+    lateThresholdFrom: 15,
+    lateThresholdGrowth: 36,
+    /** Chaque renaissance multiplie la production par multiplierBase… */
     multiplierBase: 4,
-    /** Garde-fou : 4^400 ≈ 1e240, encore représentable. */
+    /** …puis par lateMultiplierBase à partir de la renaissance n° lateMultiplierFrom. */
+    lateMultiplierFrom: 10,
+    lateMultiplierBase: 2,
+    /** Garde-fou : le multiplicateur et les seuils restent représentables. */
     maxRenaissances: 400,
   }),
 

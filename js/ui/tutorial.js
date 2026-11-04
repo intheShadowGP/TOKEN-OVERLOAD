@@ -5,7 +5,7 @@ const STEPS = [
   { target: '.counter', title: 'Vos tokens', text: 'Ici, vos tokens disponibles. Juste en dessous : la production par seconde, la puissance de clic et le multiplicateur global.' },
   { target: '#tab-infra', title: 'Achetez des infrastructures', text: 'Du PC du CDI à la Singularité informatique : elles produisent des tokens automatiquement, même quand vous ne cliquez pas.' },
   { target: '#grade-progress', title: 'Montez en grade', text: 'Les grades dépendent des clusters achetés et des clics depuis la dernière renaissance, et du nombre de renaissances. Chaque grade ajoute +10 % de production ; il repart de zéro à chaque renaissance.' },
-  { target: '#rebirth-progress', title: 'Renaissez', text: 'Après 1 M de tokens générés dans une partie, la renaissance remet la partie à zéro contre un multiplicateur permanent ×4. Elle ne se déclenche jamais toute seule.' },
+  { target: '#rebirth-progress', title: 'Renaissez', text: 'Après 1 M de tokens générés dans une partie, la renaissance remet la partie à zéro contre un multiplicateur permanent (×4 par renaissance, ×2 à partir de la 10e). Elle ne se déclenche jamais toute seule.' },
 ];
 
 export function createTutorial({ onFinish }) {

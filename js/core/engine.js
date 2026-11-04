@@ -8,8 +8,8 @@
  * même résultat qu'on avance de 16 ms ou de 8 heures d'un coup.
  */
 import { CONFIG } from './config.js';
-import { clampValue } from './numbers.js';
-import { autoclickerCost, buildingCost, computeRates, maxAffordable } from './economy.js';
+import { clampValue, formatMultiplier } from './numbers.js';
+import { autoclickerCost, buildingCost, computeRates, maxAffordable, prestigeMultiplier } from './economy.js';
 import { applyEvent, expireEffects, nextDelay, nextExpiry, pickEvent } from './events.js';
 import { updateGrade } from './progression.js';
 import { canRebirth, performRebirth } from './prestige.js';
@@ -297,7 +297,7 @@ export class GameEngine {
     const record = performRebirth(this.state);
     if (!record) return null;
     this.invalidate();
-    this.log('rebirth', `Renaissance n°${record.n} — multiplicateur ${CONFIG.prestige.multiplierBase}^${record.n}`);
+    this.log('rebirth', `Renaissance n°${record.n} — multiplicateur permanent ${formatMultiplier(prestigeMultiplier(record.n))}`);
     this.emit('rebirth', record);
     this.evaluateProgress();
     this.emit('save-request', null);
