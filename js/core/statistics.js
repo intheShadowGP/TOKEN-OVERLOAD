@@ -1,7 +1,7 @@
 /** Statistiques : échantillonnage de l'historique et tableau récapitulatif. */
 import { CONFIG } from './config.js';
 import { formatDuration, formatMultiplier, formatNumber } from './numbers.js';
-import { currentGrade } from './progression.js';
+import { bestGrade, currentGrade } from './progression.js';
 import { achievementCount } from './achievements.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 
@@ -45,6 +45,7 @@ export function statisticsRows(s, rates, fmt = {}) {
     { group: 'Historique', label: 'Temps de jeu total', value: formatDuration(s.playTime) },
     { group: 'Historique', label: 'Événements vécus', value: n(s.eventsSeen) },
     { group: 'Progression', label: 'Grade actuel', value: currentGrade(s).name },
+    { group: 'Progression', label: 'Meilleur grade atteint', value: bestGrade(s).name },
     { group: 'Progression', label: 'Renaissances', value: n(s.renaissances) },
     { group: 'Progression', label: 'Multiplicateur de renaissance', value: formatMultiplier(rates.prestige, fmt) },
     { group: 'Progression', label: 'Multiplicateur global', value: formatMultiplier(rates.global, fmt) },

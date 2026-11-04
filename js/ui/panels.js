@@ -35,13 +35,14 @@ export function createGradePanel(engine) {
       for (const c of cards) {
         const reached = c.i <= s.gradeIndex;
         const current = c.i === s.gradeIndex;
-        const key = `${reached}|${current}|${Object.keys(c.g.req).map((k) => Math.min(stats[k], c.g.req[k])).join(',')}`;
+        const record = !reached && c.i <= s.bestGradeIndex;
+        const key = `${reached}|${current}|${record}|${Object.keys(c.g.req).map((k) => Math.min(stats[k], c.g.req[k])).join(',')}`;
         if (key === c.key) continue;
         c.key = key;
         toggleClass(c.card, 'is-current', current);
         toggleClass(c.card, 'is-locked', !reached);
         c.pill.className = `status-pill${current ? ' status-pill--current' : reached ? ' status-pill--done' : ''}`;
-        setText(c.pill, current ? 'Actuel' : reached ? 'Débloqué' : 'Verrouillé');
+        setText(c.pill, current ? 'Actuel' : reached ? 'Débloqué' : record ? 'Déjà atteint' : 'Verrouillé');
         c.reqs.replaceChildren(
           ...Object.entries(c.g.req).map(([k, need]) => {
             const done = stats[k] >= need;

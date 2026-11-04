@@ -14,7 +14,7 @@ export function rebirthThreshold(n) {
 
 /** Facteur appliqué au seuil lors de la (i+1)-ième renaissance. */
 export function thresholdGrowth(i) {
-  return Math.max(P.growthMin, P.growthStart * P.growthDecay ** i);
+  return P.thresholdSteps[i % P.thresholdSteps.length];
 }
 
 export function canRebirth(s) {

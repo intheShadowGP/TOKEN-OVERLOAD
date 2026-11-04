@@ -1,7 +1,8 @@
 /**
- * Grades. Les conditions sont cumulatives et historiques :
- * clusters = infrastructures achetées depuis le début du jeu (renaissances comprises),
- * clics = clics manuels + auto-clics depuis le début du jeu.
+ * Grades. Le grade repart de Noobie à chaque renaissance. Conditions :
+ * clusters = infrastructures achetées depuis la dernière renaissance,
+ * clics = clics manuels + auto-clics depuis la dernière renaissance,
+ * renaissances = nombre total de renaissances effectuées.
  */
 export const GRADES = Object.freeze([
   { id: 'noobie', name: 'Noobie', icon: 'seed', color: '#929BAE', req: { clusters: 0, clicks: 0, renaissances: 0 }, text: "Vous pensez encore qu'un token est une pièce de fête foraine." },

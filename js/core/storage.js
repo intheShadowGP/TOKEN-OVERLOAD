@@ -9,7 +9,7 @@
 import { CONFIG } from './config.js';
 import { SAVE_VERSION, createInitialState } from './state.js';
 import { sanitizeSettings } from './settings.js';
-import { earnedGradeIndex } from './progression.js';
+import { earnedGradeIndex, lifetimeGradeStats } from './progression.js';
 import { ACHIEVEMENT_MAP } from '../data/achievements.js';
 import { EVENT_MAP } from '../data/events.js';
 import { AUTOCLICKER_MAP, BUILDING_MAP, CLICK_UPGRADE_MAP } from '../data/upgrades.js';
@@ -48,6 +48,7 @@ const NUMERIC = {
   totalBuildingsBought: [0, 1e9, true],
   renaissances: [0, CONFIG.prestige.maxRenaissances, true],
   gradeIndex: [0, 11, true],
+  bestGradeIndex: [0, 11, true],
   bestTps: [0, MAX, false],
   playTime: [0, 1e10, false],
   clock: [0, 1e11, false],
@@ -188,6 +189,7 @@ export function sanitizeState(data) {
 
   // Un grade se mérite : il est recalculé à partir des statistiques.
   s.gradeIndex = Math.min(s.gradeIndex, earnedGradeIndex(s));
+  s.bestGradeIndex = Math.max(s.gradeIndex, Math.min(s.bestGradeIndex, earnedGradeIndex(s, lifetimeGradeStats(s))));
   if (s.effects.some((fx) => fx.endsAt > s.clock + 3600)) errors.push('effects (durée)');
 
   // corrections douces pour une sauvegarde locale partiellement abîmée
@@ -209,9 +211,11 @@ export function sanitizeState(data) {
 
 /**
  * Migrations : chaque entrée transforme une version N en N+1.
- * Exemple futur : 1: (d) => ({ ...d, v: 2, nouveauChamp: 0 }).
  */
-const MIGRATIONS = {};
+const MIGRATIONS = {
+  // v2 : grades remis à zéro à chaque renaissance ; l'ancien grade devient le record
+  1: (d) => ({ ...d, v: 2, bestGradeIndex: d.gradeIndex }),
+};
 
 export function migrate(data) {
   if (!isObj(data)) throw new SaveError('Format de sauvegarde invalide.');

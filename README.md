@@ -11,10 +11,10 @@ Jeu incrémental (*idle / clicker*) humoristique sur la consommation de tokens d
 
 | Domaine | Contenu |
 | --- | --- |
-| Clic | Gros bouton token animé, particules, gains flottants, 1 token par clic au départ ; 15 améliorations de clic (valeur de base jusqu'à 500 M, ou % de la production) ; 3 auto-cliqueurs qui génèrent de vrais clics. |
+| Clic | Gros bouton token animé, particules, gains flottants, 1 token par clic au départ ; 15 améliorations de clic (valeur de base jusqu'à 500 M, ou % de la production) ; 4 auto-cliqueurs (2, 5, 10 et 100 clics/s par niveau) qui génèrent de vrais clics. |
 | Production | 25 infrastructures en 5 paliers (Informatique basique → Technologies absurdes). Coût exponentiel `base × 1,15^n`, achat ×1 / ×10 / ×25 / Max, production ×2 à 25, 50, 100, 150, 200… exemplaires, temps d'amortissement affiché. |
-| Grades | 12 grades (Noobie → Omniscience) selon les clusters achetés, les clics et les renaissances **cumulés sur toute la partie** ; barres de progression ; +10 % de production par grade. |
-| Renaissance | Seuil de tokens générés dans la partie, avertissement, confirmation explicite, compte à rebours, distorsion et particules. Multiplicateur permanent `4^renaissances` sur le clic et la production. Jamais automatique. |
+| Grades | 12 grades (Noobie → Omniscience). Le grade **repart de Noobie à chaque renaissance** : clusters achetés et clics comptent depuis la dernière renaissance, le nombre de renaissances est cumulé. Barres de progression, +10 % de production par grade détenu, meilleur grade atteint conservé. |
+| Renaissance | Seuil de tokens générés dans la partie (1 M, 100 M, 1 Md, 100 Md, 1 T, 100 T… : ×100 puis ×10 en alternance), avertissement, confirmation explicite, compte à rebours, distorsion et particules. Multiplicateur permanent `4^renaissances` sur le clic et la production. Jamais automatique. |
 | Succès | 49 succès, chacun avec un bonus permanent (+1 à +10 %). |
 | Événements | 20 événements aléatoires locaux : bonus, incidents (temporaires et plafonnés), rares, défensifs (patch, firewall, audit, sauvegarde immuable). |
 | Statistiques | Partie en cours, historique, progression, graphique de production (échelle logarithmique), historique des renaissances, journal. |
@@ -118,9 +118,9 @@ Le jeu utilise des flottants double précision (jusqu'à ~1,8e308), largement su
 
 ### Équilibrage
 
-Les simulations (`npm run simulate` : un joueur glouton qui clique 4 fois par seconde) donnent environ 25 min pour la 1re renaissance, 40 min pour la 2e, puis des parties qui raccourcissent (5–7 min) avant de rallonger doucement (10–15 min vers la 30e). Les grades ultimes restent un objectif long terme, portés par les clics cumulés.
+Les simulations (`npm run simulate` : un joueur glouton qui clique 4 fois par seconde) donnent environ 15 min pour chacune des deux premières renaissances, puis des parties très courtes (quelques secondes) entre la 7e et la 18e, qui rallongent ensuite fortement : environ 30 min pour la 22e, 1 h pour la 23e, puis plus de 15 h à partir de la 24e, quand toutes les infrastructures sont achetées et que le seuil (×31,6 en moyenne par renaissance) dépasse le multiplicateur ×4.
 
-Le seuil de renaissance part de 1 M de tokens générés. La croissance ×10 constante proposée au départ a été mesurée : avec le multiplicateur ×4, les parties tombaient à quelques secondes dès la 7e renaissance. Le seuil est donc multiplié par 1 600, puis 960, 576… jusqu'à un plancher de ×5. Tout est réglable dans `js/core/config.js` (`prestige.growthStart`, `growthDecay`, `growthMin`).
+Les seuils de renaissance suivent la liste `prestige.thresholdSteps` de `js/core/config.js` (par défaut `[100, 10]`, parcourue en boucle). Les grades, eux, se règlent dans `js/data/levels.js`.
 
 ## Tests
 
@@ -130,7 +130,7 @@ npm test
 
 Node.js 22 ou plus suffit : aucune dépendance à installer.
 
-61 tests (`node:test`, sans dépendance) couvrent : achats et coûts, production et delta time, clics et limitation, auto-clics, hors ligne, multiplicateurs (appliqués une seule fois), renaissances (remis à zéro / conservé, ×4), grades (cumul, jamais de régression), succès, événements (tirage, durées, boucliers, plafonds), sauvegarde locale, export/import (empreinte, types, bornes, versions, pollution de prototype, injection de multiplicateurs), réinitialisation, formatage, et un test d'équilibrage.
+62 tests (`node:test`, sans dépendance) couvrent : achats et coûts, production et delta time, clics et limitation, auto-clics, hors ligne, multiplicateurs (appliqués une seule fois), renaissances (seuils, remis à zéro / conservé, ×4), grades (remise à zéro à la renaissance, meilleur grade conservé, migration des anciennes sauvegardes), succès, événements (tirage, durées, boucliers, plafonds), sauvegarde locale, export/import (empreinte, types, bornes, versions, pollution de prototype, injection de multiplicateurs), réinitialisation, formatage, et un test d'équilibrage.
 
 ## Crédits et licences
 

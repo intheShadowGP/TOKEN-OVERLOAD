@@ -23,18 +23,10 @@ export const CONFIG = Object.freeze({
     /** Tokens à générer pendant la partie en cours pour la première renaissance. */
     baseThreshold: 1e6,
     /**
-     * Le seuil suivant = seuil précédent × croissance. La croissance part de
-     * growthStart, est multipliée par growthDecay à chaque renaissance et ne
-     * descend jamais sous growthMin (1600, 960, 576… puis 5).
-     * Pourquoi pas ×10 constant : le multiplicateur ×4 fait croître la
-     * production bien plus vite que ×10 tant que de nouvelles infrastructures
-     * se débloquent ; les parties tombaient à quelques secondes dès la 8e
-     * renaissance (voir tests/token-overload/simulate.mjs). Pour retrouver
-     * ×10 strict : growthStart 10, growthDecay 1, growthMin 10.
+     * Le seuil suivant = seuil précédent × le facteur suivant de cette liste,
+     * parcourue en boucle : 1 M, 100 M, 1 Md, 100 Md, 1 T, 100 T, 1 Qa…
      */
-    growthStart: 1600,
-    growthDecay: 0.6,
-    growthMin: 5,
+    thresholdSteps: Object.freeze([100, 10]),
     /** Multiplicateur permanent = base ^ renaissances. */
     multiplierBase: 4,
     /** Garde-fou : 4^400 ≈ 1e240, encore représentable. */

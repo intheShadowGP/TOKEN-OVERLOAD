@@ -2,7 +2,7 @@
 import { CONFIG } from './config.js';
 import { defaultSettings } from './settings.js';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 /** @param {number} [now] horodatage (ms) de création */
 export function createInitialState(now = Date.now()) {
@@ -29,7 +29,10 @@ export function createInitialState(now = Date.now()) {
     autoClicks: 0,
     totalBuildingsBought: 0,
     renaissances: 0,
+    /** Grade de la partie en cours : repart de 0 à chaque renaissance. */
     gradeIndex: 0,
+    /** Meilleur grade jamais atteint (historique). */
+    bestGradeIndex: 0,
     achievements: /** @type {Record<string, number>} */ ({}),
     bestTps: 0,
     playTime: 0,
@@ -59,8 +62,9 @@ export function createInitialState(now = Date.now()) {
 /** @typedef {ReturnType<typeof createInitialState>} GameState */
 
 /**
- * Remet à zéro la partie en cours (renaissance). Ne touche jamais aux
- * statistiques historiques, grades, succès ni paramètres.
+ * Remet à zéro la partie en cours (renaissance), grade compris (le meilleur
+ * grade est conservé). Ne touche jamais aux statistiques historiques, succès
+ * ni paramètres.
  * @param {GameState} s
  */
 export function resetRun(s) {
@@ -74,5 +78,7 @@ export function resetRun(s) {
   s.autoclickers = {};
   s.autoClickCarry = 0;
   s.effects = [];
+  s.bestGradeIndex = Math.max(s.bestGradeIndex, s.gradeIndex);
+  s.gradeIndex = 0;
   s.nextEventAt = s.clock + CONFIG.events.firstDelay;
 }

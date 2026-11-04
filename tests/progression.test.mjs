@@ -9,10 +9,10 @@ import { ACHIEVEMENTS } from '../js/data/achievements.js';
 
 // ───── renaissance ─────
 
-test('seuil : 1 M au départ, croissant à chaque renaissance', () => {
-  assert.equal(rebirthThreshold(0), 1e6);
+test('seuil : 1 M, 100 M, 1 Md, 100 Md, 1 T… (alternance ×100 / ×10)', () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6].map(rebirthThreshold), [1e6, 1e8, 1e9, 1e11, 1e12, 1e14, 1e15]);
   for (let n = 1; n < 40; n++) assert.ok(rebirthThreshold(n) > rebirthThreshold(n - 1));
-  assert.equal(rebirthThreshold(1), 1e6 * CONFIG.prestige.growthStart);
+  assert.ok(Number.isFinite(rebirthThreshold(CONFIG.prestige.maxRenaissances)));
 });
 
 test('renaissance impossible sous le seuil, jamais automatique', () => {
@@ -58,7 +58,10 @@ test('renaissance : remet la partie à zéro et conserve l’historique', () => 
   assert.equal(s.totalBuildingsBought, 80);
   assert.equal(s.renaissances, 1);
   assert.ok(Object.hasOwn(s.achievements, 'first-token'));
-  assert.ok(s.gradeIndex >= 2);
+  assert.equal(s.gradeIndex, 0, 'le grade repart de Noobie');
+  assert.equal(s.bestGradeIndex, 2, 'le meilleur grade est conservé');
+  assert.equal(s.runClicks, 0);
+  assert.equal(s.runBuildingsBought, 0);
   assert.equal(s.rebirthHistory.length, 1);
 });
 
@@ -93,32 +96,38 @@ test('12 grades, conditions croissantes, tableau de départ respecté', () => {
 });
 
 test('toutes les conditions doivent être remplies', () => {
-  const e = makeEngine({ totalBuildingsBought: 1000, totalClicks: 1e6, renaissances: 0 });
+  const e = makeEngine({ runBuildingsBought: 1000, runClicks: 1e6, totalBuildingsBought: 1000, totalClicks: 1e6, renaissances: 0 });
   assert.equal(earnedGradeIndex(e.state), 3, 'Script Kiddie : il manque une renaissance pour Prompt Engineer');
   e.state.renaissances = 1;
   assert.equal(earnedGradeIndex(e.state), 4);
 });
 
-test('le grade ne redescend jamais et les clusters cumulent à travers les renaissances', () => {
+test('le grade repart de zéro à chaque renaissance, conditions comptées depuis la renaissance', () => {
   const e = makeEngine({ tokens: 1e6, totalGenerated: 1e6, runGenerated: 1e6 });
   for (let i = 0; i < 5; i++) e.buyBuilding('cdi-pc', 1);
   for (let i = 0; i < 500; i++) e.click(i * 100);
   e.evaluateProgress();
   assert.equal(e.state.gradeIndex, 2, 'Vibe Codeur');
   e.rebirth();
-  assert.equal(e.state.gradeIndex, 2, 'conservé après renaissance');
-  assert.equal(e.state.totalBuildingsBought, 5, 'clusters historiques conservés');
+  assert.equal(e.state.gradeIndex, 0, 'retour à Noobie après la renaissance');
+  assert.equal(e.state.bestGradeIndex, 2, 'record conservé');
+  assert.equal(e.state.totalBuildingsBought, 5, 'clusters historiques conservés dans les statistiques');
+  assert.equal(e.state.totalClicks, 500, 'clics historiques conservés dans les statistiques');
+  const p = nextGradeProgress(e.state);
+  assert.equal(p.grade.id, 'prompt-beginner');
+  assert.equal(p.items.find((x) => x.key === 'clusters').have, 0, 'les anciens clusters ne comptent plus');
   e.state.tokens = 1e6;
   e.state.totalGenerated += 1e6;
-  for (let i = 0; i < 10; i++) e.buyBuilding('cdi-pc', 1);
-  assert.equal(e.state.totalBuildingsBought, 15);
-  const p = nextGradeProgress(e.state);
-  assert.equal(p.grade.id, 'script-kiddie');
-  assert.equal(p.items.find((x) => x.key === 'clusters').have, 15);
+  for (let i = 0; i < 15; i++) e.buyBuilding('cdi-pc', 1);
+  for (let i = 0; i < 2000; i++) e.click(i * 100);
+  e.evaluateProgress();
+  assert.equal(e.state.gradeIndex, 3, 'Script Kiddie regagné pendant la nouvelle partie');
+  assert.equal(e.state.bestGradeIndex, 3);
+  assert.equal(e.state.totalBuildingsBought, 20);
 });
 
 test('une montée de grade émet une notification et augmente la production', () => {
-  const e = makeEngine({ buildings: { 'cdi-pc': 1 }, totalBuildingsBought: 1 });
+  const e = makeEngine({ buildings: { 'cdi-pc': 1 }, totalBuildingsBought: 1, runBuildingsBought: 1 });
   const seen = [];
   e.on('grade', (g) => seen.push(g.id));
   const before = e.rates.tps;

@@ -131,8 +131,20 @@ test('les multiplicateurs d’effets ne peuvent pas être injectés', () => {
 });
 
 test('un grade non mérité est ramené au grade justifié par les statistiques', () => {
-  const { state } = sanitizeState({ ...createInitialState(), gradeIndex: 11 });
+  const { state } = sanitizeState({ ...createInitialState(), gradeIndex: 11, bestGradeIndex: 11 });
   assert.equal(state.gradeIndex, 0);
+  assert.equal(state.bestGradeIndex, 0);
+});
+
+test('migration v1 → v2 : l’ancien grade devient le meilleur grade atteint', () => {
+  const v1 = { ...createInitialState(), v: 1, totalBuildingsBought: 40, totalClicks: 20000, renaissances: 1, gradeIndex: 4 };
+  delete v1.bestGradeIndex;
+  const text = JSON.stringify({ format: 'token-overload-save', version: 1, checksum: checksum(JSON.stringify(v1)), data: v1 });
+  const { state, errors } = deserialize(text);
+  assert.deepEqual(errors, []);
+  assert.equal(state.v, 2);
+  assert.equal(state.bestGradeIndex, 4);
+  assert.equal(state.gradeIndex, 0, 'le grade courant se regagne pendant la partie');
 });
 
 test('le texte du journal est nettoyé (caractères de contrôle, longueur)', () => {

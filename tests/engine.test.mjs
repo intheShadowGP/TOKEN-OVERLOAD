@@ -99,11 +99,12 @@ test('hors ligne : efficacité réduite, plafond 24 h, sans auto-clics', () => {
 });
 
 test('auto-cliqueurs : vrais clics comptés et rémunérés à la puissance de clic', () => {
-  const e = makeEngine({ autoclickers: { 'ahk-macro': 2 } }, { allAchievements: true }); // 1 clic/s
+  const e = makeEngine({ autoclickers: { 'ahk-macro': 1 } }, { allAchievements: true }); // 2 clics/s
   e.advance(10);
-  assert.equal(e.state.autoClicks, 10);
-  assert.equal(e.state.totalClicks, 10);
-  assert.ok(close(e.state.tokens, 10 * e.rates.click));
+  assert.equal(e.state.autoClicks, 20);
+  assert.equal(e.state.totalClicks, 20);
+  assert.equal(e.state.runClicks, 20);
+  assert.ok(close(e.state.tokens, 20 * e.rates.click));
 });
 
 test('meilleure production historique mémorisée', () => {

@@ -205,7 +205,7 @@
           <div class="panel-head">
             <div>
               <h2 class="panel-title">Grades</h2>
-              <p class="panel-sub">Conditions cumulatives et historiques : elles ne diminuent jamais, même après une renaissance. Chaque grade ajoute +10 % de production permanente.</p>
+              <p class="panel-sub">Le grade repart de Noobie à chaque renaissance : clusters achetés et clics sont comptés depuis la dernière renaissance, le nombre de renaissances est cumulé. Chaque grade ajoute +10 % de production tant qu'il est détenu.</p>
             </div>
           </div>
           <div class="grade-list" id="grade-list"></div>
@@ -252,6 +252,7 @@
                 <li>Production automatique de la partie</li>
                 <li>Améliorations et auto-cliqueurs</li>
                 <li>Bonus temporaires en cours</li>
+                <li>Grade (retour à Noobie)</li>
               </ul>
             </div>
             <div class="keep-card keep-card--keep">
@@ -259,7 +260,7 @@
               <ul>
                 <li>Clics et tokens générés (historique)</li>
                 <li>Clusters achetés (historique)</li>
-                <li>Grades et succès débloqués</li>
+                <li>Succès débloqués et meilleur grade atteint</li>
                 <li>Nombre de renaissances</li>
                 <li>Protections défensives, journal, statistiques</li>
               </ul>
@@ -427,7 +428,7 @@
         <span class="mult-arrow" data-icon="arrowUp"></span>
         <div class="mult-box mult-box--next"><span>Nouveau multiplicateur</span><strong id="dlg-rb-next">×4</strong></div>
       </div>
-      <p class="note note--warning"><span data-icon="warning"></span><span>Vos tokens (<strong id="dlg-rb-tokens">0</strong>), vos infrastructures, vos améliorations et vos auto-cliqueurs seront <strong>remis à zéro</strong>. Vos statistiques historiques, grades, succès et renaissances sont conservés.</span></p>
+      <p class="note note--warning"><span data-icon="warning"></span><span>Vos tokens (<strong id="dlg-rb-tokens">0</strong>), vos infrastructures, vos améliorations et vos auto-cliqueurs seront <strong>remis à zéro</strong>. Votre grade repart de <strong>Noobie</strong>. Vos statistiques historiques, succès et renaissances sont conservés.</span></p>
       <p class="panel-sub" id="dlg-rb-nextthreshold"></p>
       <label class="switch switch--confirm"><input type="checkbox" id="dlg-rb-check"><span class="switch__track"></span><span>Je comprends que la partie en cours sera remise à zéro.</span></label>
       <div class="btn-row btn-row--end">
